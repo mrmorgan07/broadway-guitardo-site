@@ -12,6 +12,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"         # Разрешает установку devDependencies (нужно для vite)
       - key: SESSION_SECRET
         generateValue: true    # Render сгенерирует случайную строку автоматически
       # ADMIN_PASSWORD задайте вручную в дашборде Render (не храните в git!)
