@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broadway Guitardo — v5 «Афиша»</title>
+  <meta name="description" content="Театрально-хоровой коллектив. Живые мюзиклы.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/v5/style.css">
+</head>
+<body>
+
+  <!-- Бегущая строка-маркиза (заполняется из данных) -->
+  <div class="marquee" id="marquee" aria-hidden="true">
+    <div class="marquee__track" id="marqueeTrack"></div>
+  </div>
+
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="#hero" class="logo" id="logo">
+        <span class="logo__star">✦</span>
+        <span class="logo__text">Broadway <em>Guitardo</em></span>
+      </a>
+
+      <nav class="nav" id="nav">
+        <a href="#about">О коллективе</a>
+        <a href="#leaders">Команда</a>
+        <a href="#afisha">Афиша</a>
+        <a href="#feature">Спектакль</a>
+        <a href="#location">Как добраться</a>
+        <a href="#afisha" class="btn btn--solid">Купить билеты</a>
+      </nav>
+
+      <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Контент рендерится из /api/content -->
+  <main id="app">
+    <div class="boot-screen" id="bootScreen">Загрузка…</div>
+  </main>
+
+  <footer class="footer" id="footer"></footer>
+
+  <!-- Модалка спектакля -->
+  <dialog class="modal" id="projectModal">
+    <div class="modal__sheet">
+      <button class="modal__close" data-close-project aria-label="Закрыть">&times;</button>
+      <div class="modal__poster"><img id="mPoster" src="" alt=""></div>
+      <div class="modal__body">
+        <h2 id="mTitle"></h2>
+        <p class="modal__meta" id="mMeta"></p>
+        <p id="mDesc"></p>
+        <a id="mBuy" href="#" class="btn btn--solid btn--lg" target="_blank" rel="noopener">Купить билеты</a>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Модалка трейлера -->
+  <dialog class="modal modal--video" id="trailerModal">
+    <div class="modal__sheet modal__sheet--video">
+      <button class="modal__close" data-close-trailer aria-label="Закрыть">&times;</button>
+      <div class="video-stub" id="trailerBody"></div>
+    </div>
+  </dialog>
+
+  <script src="/v5/script.js"></script>
+</body>
+</html>

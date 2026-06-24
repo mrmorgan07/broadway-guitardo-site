@@ -1,0 +1,156 @@
+{
+  "hero": {
+    "title": "Бал Вампиров",
+    "subtitle": "15 ноября 2026, 19:00 — мюзикл, который не отпускает",
+    "eyebrow": "Ближайший показ",
+    "backgroundImage": "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=1920&q=80",
+    "backgroundWebp": "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=1920&fm=webp&q=80"
+  },
+  "videoTrailerUrl": "https://www.youtube.com/embed/ВАШ_ID_ВИДЕО",
+  "seo": {
+    "title": "Бал Вампиров — театрально-хоровой коллектив | Мюзиклы",
+    "description": "Театрально-хоровой коллектив. Мюзиклы, живой вокал и сценическое волшебство. Ближайший показ — «Бал Вампиров».",
+    "keywords": "мюзикл, хор, театр, Бал Вампиров, билеты, постановка",
+    "ogUrl": "https://ваш-сайт.ru/",
+    "ogImage": "https://ваш-сайт.ru/images/og-preview.jpg"
+  },
+  "about": "Мы — хор, который превращает мюзиклы в живую магию. Каждый наш проект — от первой ноты до финальных оваций — создаётся в дружной команде профессионалов и любителей. Наши постановки — это синтез мощного вокала, драматической игры и сценического волшебства.",
+  "gallery": [
+    {
+      "caption": "Репетиция",
+      "src": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80",
+      "webp": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&fm=webp&q=80",
+      "alt": "Репетиция хора"
+    },
+    {
+      "caption": "Спектакль",
+      "src": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&q=80",
+      "webp": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&fm=webp&q=80",
+      "alt": "Выступление на сцене"
+    },
+    {
+      "caption": "За кулисами",
+      "src": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80",
+      "webp": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&fm=webp&q=80",
+      "alt": "За кулисами"
+    }
+  ],
+  "team": [
+    {
+      "name": "Екатерина Воронова",
+      "role": "Художественный руководитель",
+      "bio": "Более 15 лет руководит хоровыми коллективами и ставит мюзиклы. Выпускница Московской консерватории, лауреат всероссийских конкурсов хоровых дирижёров. Верит, что каждый голос может стать частью большого искусства.",
+      "awards": "Лауреат премии «Золотая маска» (номинация), руководитель 12 постановок",
+      "photo": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80",
+      "photoWebp": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&fm=webp&q=80"
+    },
+    {
+      "name": "Андрей Мельников",
+      "role": "Концертмейстер",
+      "bio": "Пианист и аранжировщик с опытом работы в театральных постановках. Сопровождает репетиции, работает с вокалистами над партиями и создаёт оркестровки для хоровых номеров.",
+      "awards": "Солист Московской филармонии, автор аранжировок для 8 мюзиклов",
+      "photo": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&q=80",
+      "photoWebp": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&fm=webp&q=80"
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "title": "Бал Вампиров",
+      "date": "15 ноября 2026, 19:00",
+      "tag": "Мюзикл в 2-х актах",
+      "poster": "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&q=80",
+      "posterWebp": "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&fm=webp&q=80",
+      "description": "Мрачный и чувственный мюзикл о вечной любви и вечной ночи. История Альфреда — молодого журналиста, попавшего в замок вампиров, — разворачивается под мощные хоровые партии и драматические арии.",
+      "gallery": [
+        { "src": "https://images.unsplash.com/photo-1514320291840-755e8373621f?w=800&q=80", "webp": "https://images.unsplash.com/photo-1514320291840-755e8373621f?w=800&fm=webp&q=80", "alt": "Сцена из спектакля" },
+        { "src": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80", "webp": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&fm=webp&q=80", "alt": "Хор на сцене" },
+        { "src": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80", "webp": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&fm=webp&q=80", "alt": "Свет и декорации" }
+      ],
+      "soloists": ["Анна Смирнова — Сара", "Дмитрий Волков — Граф Кронин", "Елена Козлова — Магда", "Игорь Петров — Альфред"],
+      "ticketLink": "https://ваша-ссылка-на-билеты"
+    },
+    {
+      "id": 2,
+      "title": "Призрак оперы",
+      "date": "20 декабря 2026, 18:30",
+      "tag": "Классический мюзикл",
+      "poster": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=600&q=80",
+      "posterWebp": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=600&fm=webp&q=80",
+      "description": "Легендарная история любви, одержимости и музыки в Парижской опере.",
+      "gallery": [
+        { "src": "https://images.unsplash.com/photo-1501386761578-eac5c3b800fe?w=800&q=80", "webp": "https://images.unsplash.com/photo-1501386761578-eac5c3b800fe?w=800&fm=webp&q=80", "alt": "Сцена оперы" },
+        { "src": "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&q=80", "webp": "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&fm=webp&q=80", "alt": "Оркестр" },
+        { "src": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80", "webp": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&fm=webp&q=80", "alt": "За кулисами" }
+      ],
+      "soloists": ["Мария Иванова — Кристина", "Алексей Новиков — Призрак", "Ольга Белова — Карлотта"],
+      "ticketLink": "https://ваша-ссылка-на-билеты-2"
+    },
+    {
+      "id": 3,
+      "title": "Нотр-Дам де Пари",
+      "date": "14 февраля 2027, 19:00",
+      "tag": "Эпический мюзикл",
+      "poster": "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=600&q=80",
+      "posterWebp": "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=600&fm=webp&q=80",
+      "description": "Париж XV века: собор, страсть и судьбы героев в масштабной музыкальной драме.",
+      "gallery": [
+        { "src": "https://images.unsplash.com/photo-1524368535928-5b42e3da9a2b?w=800&q=80", "webp": "https://images.unsplash.com/photo-1524368535928-5b42e3da9a2b?w=800&fm=webp&q=80", "alt": "Собор" },
+        { "src": "https://images.unsplash.com/photo-1415201364774-f6f0ff26b28?w=800&q=80", "webp": "https://images.unsplash.com/photo-1415201364774-f6f0ff26b28?w=800&fm=webp&q=80", "alt": "Репетиция" },
+        { "src": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&q=80", "webp": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&fm=webp&q=80", "alt": "Концерт" }
+      ],
+      "soloists": ["Виктор Соколов — Квазимодо", "Татьяна Романова — Эсмеральда", "Павел Громов — Феб"],
+      "ticketLink": "https://ваша-ссылка-на-билеты-3"
+    },
+    {
+      "id": 4,
+      "title": "Ромео и Джульетта",
+      "date": "8 марта 2027, 19:00",
+      "tag": "Мюзикл о любви",
+      "poster": "https://images.unsplash.com/photo-1507839077054-62b179cf029a?w=600&q=80",
+      "posterWebp": "https://images.unsplash.com/photo-1507839077054-62b179cf029a?w=600&fm=webp&q=80",
+      "description": "Вечная история двух влюблённых в современной сценической интерпретации.",
+      "gallery": [
+        { "src": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80", "webp": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&fm=webp&q=80", "alt": "Бал" },
+        { "src": "https://images.unsplash.com/photo-1429962714451-bb934ecdc4de?w=800&q=80", "webp": "https://images.unsplash.com/photo-1429962714451-bb934ecdc4de?w=800&fm=webp&q=80", "alt": "Дуэт" },
+        { "src": "https://images.unsplash.com/photo-1498038432885-6f410460e4df?w=800&q=80", "webp": "https://images.unsplash.com/photo-1498038432885-6f410460e4df?w=800&fm=webp&q=80", "alt": "Финал" }
+      ],
+      "soloists": ["Ксения Лебедева — Джульетта", "Артём Морозов — Ромео", "Наталья Орлова — Леди Капулетти"],
+      "ticketLink": "https://ваша-ссылка-на-билеты-4"
+    },
+    {
+      "id": 5,
+      "title": "Отверженные",
+      "date": "25 апреля 2027, 19:00",
+      "tag": "Эпическая драма",
+      "poster": "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=600&q=80",
+      "posterWebp": "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=600&fm=webp&q=80",
+      "description": "История Жан Вальжана в масштабной музыкальной постановке с хором из 50 голосов.",
+      "gallery": [
+        { "src": "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&q=80", "webp": "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&fm=webp&q=80", "alt": "Сцена баррикад" },
+        { "src": "https://images.unsplash.com/photo-1524368535928-5b42e3da9a2b?w=800&q=80", "webp": "https://images.unsplash.com/photo-1524368535928-5b42e3da9a2b?w=800&fm=webp&q=80", "alt": "Хоровая сцена" },
+        { "src": "https://images.unsplash.com/photo-1415201364774-f6f0ff26b28?w=800&q=80", "webp": "https://images.unsplash.com/photo-1415201364774-f6f0ff26b28?w=800&fm=webp&q=80", "alt": "Репетиция" }
+      ],
+      "soloists": ["Сергей Ковалёв — Жан Вальжан", "Алина Фролова — Фантина", "Михаил Зайцев — Жаверт"],
+      "ticketLink": "https://ваша-ссылка-на-билеты-5"
+    }
+  ],
+  "socialLinks": {
+    "vk": "https://vk.com/ваша_группа",
+    "telegram": "https://t.me/ваш_канал",
+    "youtube": "https://youtube.com/ваш_канал"
+  },
+  "recruitment": "Хочешь петь на одной сцене с солистами и участвовать в создании мюзиклов? Мы ищем голоса. Приходи — у нас дружная семья, и мы научим всему. Главное — твоя любовь к музыке!",
+  "recruitmentLink": "https://guitardo.ru/ваша-ссылка",
+  "recruitmentBg": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1600&q=80",
+  "recruitmentBgWebp": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1600&fm=webp&q=80",
+  "contacts": {
+    "email": "info@example.com",
+    "phone": "+79000000000",
+    "phoneDisplay": "+7 (900) 000-00-00"
+  },
+  "brand": {
+    "name": "Хоровой театр",
+    "tagline": "Мюзиклы в живом исполнении"
+  }
+}

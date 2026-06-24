@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: broadway-guitardo
+    runtime: node
+    region: frankfurt          # ближайший к России регион на Render
+    plan: free
+
+    buildCommand: npm run render-build
+    startCommand: npm start
+
+    # Render автоматически выставляет PORT — сервер его читает через process.env.PORT
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true    # Render сгенерирует случайную строку автоматически
+      # ADMIN_PASSWORD задайте вручную в дашборде Render (не храните в git!)
+      # - key: ADMIN_PASSWORD
+      #   value: YOUR_SECURE_PASSWORD_HERE
+
+    # Авто-деплой при пуше в ветку main/master
+    autoDeploy: true
+
+    # healthCheckPath: /          # можно раскомментировать если нужен health-check

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Бал Вампиров — театрально-хоровой коллектив | Мюзиклы</title>
+  <meta name="description" content="Театрально-хоровой коллектив. Мюзиклы, живой вокал и сценическое волшебство.">
+  <meta name="keywords" content="мюзикл, хор, театр, Бал Вампиров, билеты">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="Бал Вампиров — театрально-хоровой коллектив">
+  <meta property="og:description" content="Хор, который превращает мюзиклы в живую магию.">
+  <meta property="og:url" content="https://ваш-сайт.ru/">
+  <meta property="og:image" content="https://ваш-сайт.ru/images/og-preview.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <button type="button" class="scroll-top" id="scrollTop" aria-label="Наверх">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a href="#top" class="logo"><span class="logo-text">Хоровой театр</span></a>
+      <button type="button" class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mainNav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="main-nav" id="mainNav" aria-label="Основная навигация">
+        <ul>
+          <li><a href="#about">О нас</a></li>
+          <li><a href="#team">Команда</a></li>
+          <li><a href="#calendar">Афиша</a></li>
+          <li><a href="#recruitment">В хор</a></li>
+          <li><a href="#contacts">Контакты</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="hero" aria-label="Главный экран">
+      <div class="hero-video-placeholder" id="heroVideoPlaceholder">
+        <picture><img src="" alt="" class="hero-bg-img"></picture>
+        <button type="button" class="hero-play-btn" id="heroPlayBtn" aria-label="Смотреть трейлер">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+      </div>
+      <div class="hero-overlay"></div>
+      <div class="container hero-content reveal">
+        <p class="hero-eyebrow">Ближайший показ</p>
+        <h1 class="hero-title" id="heroTitle">Загрузка…</h1>
+        <p class="hero-subtitle" id="heroSubtitle"></p>
+        <div class="hero-actions">
+          <a href="#calendar" class="btn btn-primary">Купить билеты</a>
+          <a href="#project-details" class="btn btn-outline">О проекте</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section about" id="about" aria-labelledby="about-heading">
+      <div class="container">
+        <header class="section-header reveal">
+          <h2 id="about-heading">О коллективе</h2>
+          <div class="section-divider"></div>
+        </header>
+        <div class="about-grid">
+          <div class="about-text reveal">
+            <p id="aboutText"></p>
+          </div>
+          <!-- Карусель галереи (данные из API) -->
+          <div class="about-carousel-wrap reveal" id="aboutCarouselWrap" aria-label="Фотогалерея коллектива"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section team" id="team" aria-labelledby="team-heading">
+      <div class="container">
+        <header class="section-header reveal">
+          <h2 id="team-heading">Команда</h2>
+          <div class="section-divider"></div>
+        </header>
+        <div class="team-grid" id="teamGrid"></div>
+      </div>
+    </section>
+
+    <section class="section calendar" id="calendar" aria-labelledby="calendar-heading">
+      <div class="container">
+        <header class="section-header reveal">
+          <h2 id="calendar-heading">Афиша</h2>
+          <div class="section-divider"></div>
+          <p class="section-lead">Выберите спектакль, чтобы узнать подробности</p>
+        </header>
+        <div class="projects-grid" id="projectsGrid" role="list"></div>
+      </div>
+    </section>
+
+    <section class="section project-details" id="project-details" aria-labelledby="project-details-heading">
+      <div class="container reveal">
+        <header class="section-header">
+          <h2 id="project-details-heading">Текущий проект</h2>
+          <div class="section-divider"></div>
+        </header>
+        <div class="project-highlight glass-card" id="currentProjectHighlight"></div>
+      </div>
+    </section>
+
+    <section class="section recruitment" id="recruitment" aria-labelledby="recruitment-heading">
+      <div class="recruitment-bg" aria-hidden="true"><picture><img src="" alt=""></picture></div>
+      <div class="recruitment-overlay"></div>
+      <div class="container recruitment-content reveal">
+        <h2 id="recruitment-heading">Присоединяйся к нам</h2>
+        <p id="recruitmentText"></p>
+        <a href="#" class="btn btn-primary btn-lg" id="recruitmentBtn" target="_blank" rel="noopener noreferrer">Записаться в хор / Купить абонемент</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="contacts">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <p class="footer-logo">Хоровой театр</p>
+        <p class="footer-tagline">Мюзиклы в живом исполнении</p>
+      </div>
+      <div class="footer-contacts">
+        <h3>Контакты</h3>
+        <p><a href="#" id="contactEmail"></a></p>
+        <p><a href="#" id="contactPhone"></a></p>
+      </div>
+      <div class="footer-social">
+        <h3>Мы в соцсетях</h3>
+        <div class="social-links" id="socialLinks"></div>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="copyrightYear"></span> Театрально-хоровой коллектив. Все права защищены.</p>
+    </div>
+  </footer>
+
+  <dialog class="modal" id="projectModal" aria-labelledby="modalTitle">
+    <div class="modal-inner glass-card">
+      <button type="button" class="modal-close" id="modalClose" aria-label="Закрыть">&times;</button>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </dialog>
+
+  <dialog class="modal modal-video" id="videoModal" aria-label="Видео-трейлер">
+    <div class="modal-inner">
+      <button type="button" class="modal-close" id="videoModalClose" aria-label="Закрыть">&times;</button>
+      <div class="video-embed" id="videoEmbed"></div>
+    </div>
+  </dialog>
+
+  <script src="/carousel.js"></script>
+  <script src="/script.js"></script>
+</body>
+</html>

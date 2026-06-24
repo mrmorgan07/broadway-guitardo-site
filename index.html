@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- === SEO: замените title, description и keywords на актуальные === -->
+  <title>Бал Вампиров — театрально-хоровой коллектив | Мюзиклы</title>
+  <meta name="description" content="Театрально-хоровой коллектив. Мюзиклы, живой вокал и сценическое волшебство. Ближайший показ — «Бал Вампиров».">
+  <meta name="keywords" content="мюзикл, хор, театр, Бал Вампиров, билеты, постановка">
+
+  <!-- === Open Graph: замените url, image и тексты для соцсетей === -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="Бал Вампиров — театрально-хоровой коллектив">
+  <meta property="og:description" content="Хор, который превращает мюзиклы в живую магию. Купите билеты на ближайший показ.">
+  <meta property="og:url" content="https://ваш-сайт.ru/">
+  <meta property="og:image" content="https://ваш-сайт.ru/images/og-preview.jpg">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Бал Вампиров — театрально-хоровой коллектив">
+  <meta name="twitter:description" content="Хор, который превращает мюзиклы в живую магию.">
+
+  <!-- Google Fonts: заголовки — Playfair Display, текст — Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Schema.org: организация и театральное событие -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "PerformingGroup",
+        "name": "Театрально-хоровой коллектив",
+        "description": "Хор, который превращает мюзиклы в живую магию.",
+        "url": "https://ваш-сайт.ru/",
+        "email": "info@example.com",
+        "telephone": "+7-900-000-00-00",
+        "sameAs": [
+          "https://vk.com/ваша_группа",
+          "https://t.me/ваш_канал",
+          "https://youtube.com/ваш_канал"
+        ]
+      },
+      {
+        "@type": "TheaterEvent",
+        "name": "Бал Вампиров",
+        "startDate": "2026-11-15T19:00:00+03:00",
+        "eventStatus": "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "location": {
+          "@type": "Place",
+          "name": "Концертный зал",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Город",
+            "streetAddress": "ул. Примерная, 1"
+          }
+        },
+        "performer": {
+          "@type": "PerformingGroup",
+          "name": "Театрально-хоровой коллектив"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": "https://ваша-ссылка-на-билеты",
+          "availability": "https://schema.org/InStock"
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+  <!-- Кнопка «Наверх» — появляется после прокрутки 300px -->
+  <button type="button" class="scroll-top" id="scrollTop" aria-label="Наверх">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a href="#top" class="logo" aria-label="На главную">
+        <!-- === ЗАМЕНИТЕ: название коллектива === -->
+        <span class="logo-text">Хоровой театр</span>
+      </a>
+
+      <button type="button" class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mainNav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="main-nav" id="mainNav" aria-label="Основная навигация">
+        <ul>
+          <li><a href="#about">О нас</a></li>
+          <li><a href="#team">Команда</a></li>
+          <li><a href="#calendar">Афиша</a></li>
+          <li><a href="#recruitment">В хор</a></li>
+          <li><a href="#contacts">Контакты</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- БЛОК 1: Hero-заставка -->
+    <section class="hero" id="hero" aria-label="Главный экран">
+      <!-- === ЗАМЕНИТЕ: фоновое видео — раскомментируйте iframe и вставьте ID YouTube/Vimeo === -->
+      <!--
+      <div class="hero-video-wrap" aria-hidden="true">
+        <iframe
+          src="https://www.youtube.com/embed/ВАШ_ID_ВИДЕО?autoplay=1&mute=1&loop=1&playlist=ВАШ_ID_ВИДЕО&controls=0&showinfo=0&rel=0"
+          title="Трейлер спектакля"
+          allow="autoplay; encrypted-media"
+          loading="lazy">
+        </iframe>
+      </div>
+      -->
+
+      <!-- Заглушка видео: кнопка Play открывает модальное окно с трейлером -->
+      <div class="hero-video-placeholder" id="heroVideoPlaceholder" role="img" aria-label="Фоновое изображение спектакля">
+        <picture>
+          <source srcset="https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=1920&fm=webp&q=80" type="image/webp">
+          <img src="https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=1920&q=80" alt="" class="hero-bg-img">
+        </picture>
+        <button type="button" class="hero-play-btn" id="heroPlayBtn" aria-label="Смотреть трейлер">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="hero-overlay"></div>
+
+      <div class="container hero-content reveal">
+        <!-- === ЗАМЕНИТЕ: текущий проект, дату и слоган === -->
+        <p class="hero-eyebrow">Ближайший показ</p>
+        <h1 class="hero-title" id="heroTitle">Бал Вампиров</h1>
+        <p class="hero-subtitle" id="heroSubtitle">15 ноября 2026, 19:00 — мюзикл, который не отпускает</p>
+        <div class="hero-actions">
+          <a href="#calendar" class="btn btn-primary">Купить билеты</a>
+          <a href="#project-details" class="btn btn-outline">О проекте</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- БЛОК 2: О нас -->
+    <section class="section about" id="about" aria-labelledby="about-heading">
+      <div class="container">
+        <header class="section-header reveal">
+          <h2 id="about-heading">О коллективе</h2>
+          <div class="section-divider"></div>
+        </header>
+
+        <div class="about-grid">
+          <div class="about-text reveal">
+            <!-- === ЗАМЕНИТЕ: текст о коллективе (редактируется также в script.js → SITE_CONTENT.about) === -->
+            <p id="aboutText">
+              Мы — хор, который превращает мюзиклы в живую магию. Каждый наш проект — от первой ноты до финальных оваций — создаётся в дружной команде профессионалов и любителей. Наши постановки — это синтез мощного вокала, драматической игры и сценического волшебства.
+            </p>
+          </div>
+
+          <div class="gallery reveal" id="aboutGallery" aria-label="Фотогалерея коллектива">
+            <!-- Галерея заполняется из JavaScript (SITE_CONTENT.gallery) -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- БЛОК 3: Худрук и концертмейстер -->
+    <section class="section team" id="team" aria-labelledby="team-heading">
+      <div class="container">
+        <header class="section-header reveal">
+          <h2 id="team-heading">Команда</h2>
+          <div class="section-divider"></div>
+        </header>
+
+        <div class="team-grid" id="teamGrid">
+          <!-- Карточки команды заполняются из JavaScript (SITE_CONTENT.team) -->
+        </div>
+      </div>
+    </section>
+
+    <!-- БЛОК 4: Календарь проектов -->
+    <section class="section calendar" id="calendar" aria-labelledby="calendar-heading">
+      <div class="container">
+        <header class="section-header reveal">
+          <h2 id="calendar-heading">Афиша</h2>
+          <div class="section-divider"></div>
+          <p class="section-lead">Выберите спектакль, чтобы узнать подробности</p>
+        </header>
+
+        <div class="projects-grid" id="projectsGrid" role="list">
+          <!-- Карточки проектов генерируются из массива PROJECTS в script.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Детали текущего проекта (якорь для кнопки «О проекте») -->
+    <section class="section project-details" id="project-details" aria-labelledby="project-details-heading">
+      <div class="container reveal">
+        <header class="section-header">
+          <h2 id="project-details-heading">Текущий проект</h2>
+          <div class="section-divider"></div>
+        </header>
+        <div class="project-highlight glass-card" id="currentProjectHighlight">
+          <!-- Заполняется из JavaScript (первый проект в PROJECTS) -->
+        </div>
+      </div>
+    </section>
+
+    <!-- БЛОК 5: Приглашение в хор -->
+    <section class="section recruitment" id="recruitment" aria-labelledby="recruitment-heading">
+      <div class="recruitment-bg" aria-hidden="true">
+        <picture>
+          <source srcset="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1600&fm=webp&q=80" type="image/webp">
+          <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1600&q=80" alt="">
+        </picture>
+      </div>
+      <div class="recruitment-overlay"></div>
+      <div class="container recruitment-content reveal">
+        <h2 id="recruitment-heading">Присоединяйся к нам</h2>
+        <!-- === ЗАМЕНИТЕ: текст приглашения (также в script.js → SITE_CONTENT.recruitment) === -->
+        <p id="recruitmentText">
+          Хочешь петь на одной сцене с солистами и участвовать в создании мюзиклов? Мы ищем голоса. Приходи — у нас дружная семья, и мы научим всему. Главное — твоя любовь к музыке!
+        </p>
+        <!-- === ЗАМЕНИТЕ: ссылка на Guitardo (также в script.js → SITE_CONTENT.recruitmentLink) === -->
+        <a href="https://guitardo.ru/ваша-ссылка" class="btn btn-primary btn-lg" id="recruitmentBtn" target="_blank" rel="noopener noreferrer">
+          Записаться в хор / Купить абонемент
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- БЛОК 6: Контакты и соцсети -->
+  <footer class="site-footer" id="contacts">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <p class="footer-logo">Хоровой театр</p>
+        <p class="footer-tagline">Мюзиклы в живом исполнении</p>
+      </div>
+
+      <div class="footer-contacts">
+        <h3>Контакты</h3>
+        <!-- === ЗАМЕНИТЕ: email и телефон (также в script.js → SITE_CONTENT.contacts) === -->
+        <p><a href="mailto:info@example.com" id="contactEmail">info@example.com</a></p>
+        <p><a href="tel:+79000000000" id="contactPhone">+7 (900) 000-00-00</a></p>
+      </div>
+
+      <div class="footer-social">
+        <h3>Мы в соцсетях</h3>
+        <div class="social-links" id="socialLinks" aria-label="Социальные сети">
+          <!-- Иконки заполняются из SOCIAL_LINKS в script.js -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>&copy; <span id="copyrightYear"></span> Театрально-хоровой коллектив. Все права защищены.</p>
+    </div>
+  </footer>
+
+  <!-- Модальное окно: детали проекта -->
+  <dialog class="modal" id="projectModal" aria-labelledby="modalTitle">
+    <div class="modal-inner glass-card">
+      <button type="button" class="modal-close" id="modalClose" aria-label="Закрыть">&times;</button>
+      <div class="modal-body" id="modalBody">
+        <!-- Контент подставляется из PROJECTS -->
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Модальное окно: видео-трейлер -->
+  <dialog class="modal modal-video" id="videoModal" aria-label="Видео-трейлер">
+    <div class="modal-inner">
+      <button type="button" class="modal-close" id="videoModalClose" aria-label="Закрыть">&times;</button>
+      <div class="video-embed" id="videoEmbed">
+        <!-- === ЗАМЕНИТЕ: VIDEO_TRAILER_URL в script.js === -->
+      </div>
+    </div>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>

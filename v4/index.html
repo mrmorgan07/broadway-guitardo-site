@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broadway Guitardo — v4 (макет)</title>
+  <meta name="description" content="Статичный макет v4 — editorial premium, без API.">
+  <meta name="robots" content="noindex">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/v4/style.css">
+</head>
+<body>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="#hero" class="logo">
+        <span class="logo__mark">BG</span>
+        <span class="logo__text">Broadway <em>Guitardo</em></span>
+      </a>
+
+      <nav class="nav" id="nav">
+        <div class="nav__group">
+          <span class="nav__label">Коллектив</span>
+          <a href="#about">О нас</a>
+          <a href="#leaders">Команда</a>
+        </div>
+        <div class="nav__group">
+          <span class="nav__label">Сезон</span>
+          <a href="#afisha">Афиша</a>
+          <a href="#feature">Спектакль</a>
+        </div>
+        <div class="nav__group">
+          <span class="nav__label">Связь</span>
+          <a href="#location">Локация</a>
+          <a href="#footer">Контакты</a>
+        </div>
+        <a href="#afisha" class="btn btn--gold">Купить билеты</a>
+      </nav>
+
+      <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="hero__media">
+        <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1400&q=80" alt="" class="hero__img">
+        <div class="hero__veil"></div>
+      </div>
+      <div class="container hero__grid">
+        <div class="hero__copy reveal">
+          <p class="eyebrow">Ближайший показ · 26 сентября 2026</p>
+          <h1 class="hero__title">Бал <span class="accent">Вампиров</span></h1>
+          <p class="hero__lead">Мюзикл, в котором ночь длится вечно — хор из сорока голосов, живая оркестровка и театр без дистанции между сценой и залом.</p>
+          <div class="hero__chips">
+            <span class="chip">2 ч 30 мин</span>
+            <span class="chip">2 000 – 5 000 ₽</span>
+            <span class="chip chip--wine">Премьера сезона</span>
+          </div>
+          <div class="hero__actions">
+            <a href="#afisha" class="btn btn--gold">Купить билеты</a>
+            <button type="button" class="btn btn--ghost" data-open-trailer>Смотреть трейлер</button>
+          </div>
+        </div>
+        <aside class="hero__aside reveal d1">
+          <div class="hero__card">
+            <p class="hero__card-label">Сезон 2026/27</p>
+            <ul class="hero__list">
+              <li><span>Бал Вампиров</span><time>26.09</time></li>
+              <li><span>Призрак оперы</span><time>20.12</time></li>
+              <li><span>Нотр-Дам де Пари</span><time>14.02</time></li>
+            </ul>
+            <a href="#afisha" class="link-arrow">Вся афиша</a>
+          </div>
+        </aside>
+      </div>
+      <a href="#about" class="hero__scroll">Листайте<span aria-hidden="true"></span></a>
+    </section>
+
+    <!-- О НАС -->
+    <section class="section section--ink" id="about">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-num">01</span>
+          <div>
+            <p class="eyebrow">О коллективе</p>
+            <h2 class="section-title">Магия рождается<br>из <em>полумрака</em></h2>
+          </div>
+        </div>
+
+        <div class="about__grid">
+          <div class="about__visual reveal">
+            <div class="carousel" data-carousel>
+              <div class="carousel__track">
+                <div class="carousel__slide"><img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=900&q=80" alt="Хор на сцене"></div>
+                <div class="carousel__slide"><img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=900&q=80" alt="За кулисами"></div>
+                <div class="carousel__slide"><img src="https://images.unsplash.com/photo-1501386761578-eac5c3b800fe?w=900&q=80" alt="Репетиция"></div>
+              </div>
+              <button class="carousel__btn prev" aria-label="Назад">‹</button>
+              <button class="carousel__btn next" aria-label="Вперёд">›</button>
+              <div class="carousel__dots"></div>
+            </div>
+            <p class="about__caption">Репетиция · зал «Фламенкерия»</p>
+          </div>
+
+          <div class="about__body reveal d1">
+            <p>Мы — хор, который превращает мюзиклы в живую магию. Каждый проект — от первой ноты до финальных оваций — создаётся в дружной команде профессионалов и любителей.</p>
+            <blockquote class="pull-quote">«Мы создаём мюзиклы, в которых зритель становится частью истории»</blockquote>
+            <div class="stats">
+              <div class="stat"><strong>40+</strong><span>голосов в хоре</span></div>
+              <div class="stat"><strong>12</strong><span>спектаклей в репертуаре</span></div>
+              <div class="stat"><strong>15</strong><span>лет на сцене</span></div>
+            </div>
+            <a href="#leaders" class="btn btn--line">Познакомиться с командой</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- КОМАНДА -->
+    <section class="section" id="leaders">
+      <div class="container">
+        <div class="section-head section-head--center reveal">
+          <span class="section-num">02</span>
+          <div>
+            <p class="eyebrow">Лица коллектива</p>
+            <h2 class="section-title">Руководство</h2>
+          </div>
+        </div>
+
+        <div class="team">
+          <article class="team-card reveal">
+            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=700&q=80" alt="Вадим Замаро">
+            <div class="team-card__body">
+              <h3>Вадим Замаро</h3>
+              <p class="team-card__role">Художественный руководитель</p>
+              <p>Преподаватель эстрадного вокала. Акцент на мотивацию, работу с микрофоном и движением на сцене.</p>
+            </div>
+          </article>
+          <article class="team-card reveal d1">
+            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=700&q=80" alt="Ксения Сторожева">
+            <div class="team-card__body">
+              <h3>Ксения Сторожева</h3>
+              <p class="team-card__role">Концертмейстер</p>
+              <p>Обучила более 200 человек. Игра по нотам и на слух, ансамблевое музицирование.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- АФИША BENTO -->
+    <section class="section section--ink" id="afisha">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-num">03</span>
+          <div>
+            <p class="eyebrow">Ближайшие показы</p>
+            <h2 class="section-title">Афиша</h2>
+          </div>
+        </div>
+
+        <div class="bento">
+          <article class="show-card show-card--featured reveal" data-project="bal">
+            <img src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200&q=80" alt="Бал Вампиров">
+            <div class="show-card__overlay">
+              <span class="pill pill--gold">Главная премьера</span>
+              <h3>Бал Вампиров</h3>
+              <p class="show-card__meta">26 сентября 2026 · 2 ч 30 мин · от 2 000 ₽</p>
+              <span class="link-arrow link-arrow--light">Подробнее</span>
+            </div>
+          </article>
+
+          <article class="show-card reveal d1" data-project="prizrak">
+            <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&q=80" alt="Призрак оперы">
+            <div class="show-card__overlay">
+              <h3>Призрак оперы</h3>
+              <p class="show-card__meta">20 декабря · 2 ч 15 мин</p>
+            </div>
+          </article>
+
+          <article class="show-card reveal d2" data-project="notr">
+            <img src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80" alt="Нотр-Дам де Пари">
+            <div class="show-card__overlay">
+              <h3>Нотр-Дам де Пари</h3>
+              <p class="show-card__meta">14 февраля · 2 ч 45 мин</p>
+            </div>
+          </article>
+
+          <article class="show-card reveal d1" data-project="chicago">
+            <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80" alt="Чикаго">
+            <div class="show-card__overlay">
+              <h3>Чикаго</h3>
+              <p class="show-card__meta">20 июня · 2 ч 20 мин</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- СПЕКТАКЛЬ -->
+    <section class="feature" id="feature">
+      <div class="feature__banner">
+        <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1600&q=80" alt="">
+        <div class="feature__banner-inner container">
+          <p class="eyebrow eyebrow--light">Спектакль сезона</p>
+          <h2>Бал Вампиров</h2>
+        </div>
+      </div>
+
+      <div class="container feature__body">
+        <dl class="meta-grid reveal">
+          <div><dt>Дата</dt><dd>26 сентября 2026, 19:00</dd></div>
+          <div><dt>Формат</dt><dd>Мюзикл в 2-х актах</dd></div>
+          <div><dt>Длительность</dt><dd>2 ч 30 мин</dd></div>
+          <div><dt>Стоимость</dt><dd>2 000 – 5 000 ₽</dd></div>
+        </dl>
+
+        <div class="feature__cols reveal d1">
+          <p class="feature__text">Мрачный и чувственный мюзикл о вечной любви и вечной ночи. История Альфреда — молодого журналиста, попавшего в замок вампиров — разворачивается под мощные хоровые партии и драматические арии.</p>
+          <div class="feature__cta">
+            <a href="#" class="btn btn--gold">Купить билеты</a>
+            <button type="button" class="btn btn--line" data-open-trailer>Трейлер</button>
+          </div>
+        </div>
+
+        <div class="soloists reveal">
+          <p class="eyebrow">В ролях</p>
+          <h3 class="soloists__title">Солисты</h3>
+          <div class="soloists__strip">
+            <figure class="soloist">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80" alt="">
+              <figcaption><strong>Александр Шутяев</strong><span>Граф Кролок</span></figcaption>
+            </figure>
+            <figure class="soloist">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80" alt="">
+              <figcaption><strong>Дарья Климова</strong><span>Сара</span></figcaption>
+            </figure>
+            <figure class="soloist">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80" alt="">
+              <figcaption><strong>Никита Франц</strong><span>Альфред</span></figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ПРИГЛАШЕНИЕ -->
+    <section class="cta-band" id="invite">
+      <div class="container cta-band__inner reveal">
+        <div>
+          <p class="eyebrow eyebrow--light">Присоединяйтесь</p>
+          <h2 class="cta-band__title">Стань частью<br>труппы</h2>
+        </div>
+        <p class="cta-band__text">Ищем голоса для нового сезона. Главное — любовь к музыке и желание расти на сцене вместе с нами.</p>
+        <a href="mailto:chor@example.com" class="btn btn--gold">Написать нам</a>
+      </div>
+    </section>
+
+    <!-- ЛОКАЦИЯ -->
+    <section class="section" id="location">
+      <div class="container location">
+        <div class="location__info reveal">
+          <span class="section-num">04</span>
+          <p class="eyebrow">Локация</p>
+          <h2 class="section-title">Как добраться</h2>
+          <p class="location__address">Москва, Доброслободская ул., 5А</p>
+          <p class="location__note">Театр «Фламенкерия». Метро Бауманская / Комсомольская — 10–15 минут пешком.</p>
+        </div>
+        <div class="location__map reveal d1">
+          <div class="map-placeholder">
+            <span class="map-pin"></span>
+            <p>Яндекс.Карты · embed</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer" id="footer">
+    <div class="container footer__grid">
+      <div class="footer__brand">
+        <a href="#hero" class="logo logo--footer">
+          <span class="logo__mark">BG</span>
+          <span class="logo__text">Broadway <em>Guitardo</em></span>
+        </a>
+        <p>Мюзиклы в живом исполнении. Театрально-хоровой коллектив.</p>
+      </div>
+      <div>
+        <h4>Навигация</h4>
+        <ul>
+          <li><a href="#about">О нас</a></li>
+          <li><a href="#afisha">Афиша</a></li>
+          <li><a href="#invite">В хор</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Контакты</h4>
+        <ul>
+          <li><a href="mailto:chor@example.com">chor@example.com</a></li>
+          <li><a href="tel:+79991234567">+7 (999) 123-45-67</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Соцсети</h4>
+        <div class="socials">
+          <a href="#" aria-label="VK">VK</a>
+          <a href="#" aria-label="Telegram">TG</a>
+          <a href="#" aria-label="YouTube">YT</a>
+        </div>
+      </div>
+    </div>
+    <div class="container footer__bottom">
+      <span>© 2026 Broadway Guitardo</span>
+      <a href="/admin">Админ</a>
+    </div>
+  </footer>
+
+  <!-- Модалка спектакля (демо) -->
+  <dialog class="modal" id="projectModal">
+    <div class="modal__sheet">
+      <button class="modal__close" data-close-project aria-label="Закрыть">&times;</button>
+      <div class="modal__hero">
+        <img id="modalPoster" src="" alt="">
+        <div class="modal__hero-text">
+          <h2 id="modalTitle"></h2>
+          <p id="modalMeta"></p>
+        </div>
+      </div>
+      <div class="modal__content">
+        <p id="modalDesc"></p>
+        <a href="#" class="btn btn--gold">Купить билеты</a>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Модалка трейлера (демо) -->
+  <dialog class="modal modal--video" id="trailerModal">
+    <div class="modal__sheet modal__sheet--video">
+      <button class="modal__close" data-close-trailer aria-label="Закрыть">&times;</button>
+      <div class="video-frame">
+        <p>Здесь будет видео-трейлер</p>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/v4/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broadway Guitardo</title>
+  <meta name="description" content="Премиальный театральный коллектив: элегантная драма в бархатных тонах.">
+
+  <!-- Шрифты: Playfair Display (заголовки) + Inter (текст) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/v2/style.css">
+</head>
+<body>
+
+  <!-- ========================= ШАПКА ========================= -->
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="#hero" class="logo" id="logo">Broadway <span>Guitardo</span></a>
+
+      <nav class="nav" id="nav">
+        <a href="#about">О нас</a>
+        <a href="#leaders">Руководство</a>
+        <a href="#afisha">Афиша</a>
+        <a href="#invite">В хор</a>
+        <a href="#footer">Контакты</a>
+        <a href="#afisha" class="btn btn-primary">Купить билеты</a>
+      </nav>
+
+      <button class="burger" id="burger" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Контент рендерится из /api/content -->
+  <main id="app">
+    <div class="boot-screen" id="bootScreen">Загрузка…</div>
+  </main>
+
+  <!-- ========================= ФУТЕР ========================= -->
+  <footer class="footer" id="footer"></footer>
+
+  <!-- ========================= МОДАЛКА ТРЕЙЛЕРА ========================= -->
+  <div class="modal" id="trailerModal">
+    <div class="modal__inner">
+      <button class="modal__close" data-close-trailer aria-label="Закрыть">&times;</button>
+      <div id="trailerBody"></div>
+    </div>
+  </div>
+
+  <!-- ========================= МОДАЛКА СПЕКТАКЛЯ ========================= -->
+  <div class="modal modal--project" id="projectModal">
+    <div class="modal__panel">
+      <button class="modal__close modal__close--project" data-close-project aria-label="Закрыть">&times;</button>
+      <div id="projectBody"></div>
+    </div>
+  </div>
+
+  <script src="/v2/script.js"></script>
+</body>
+</html>

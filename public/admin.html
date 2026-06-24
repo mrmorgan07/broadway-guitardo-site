@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Админ-панель — Хоровой театр</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+
+  <!-- Экран входа -->
+  <div class="admin-login" id="loginScreen">
+    <form class="login-card glass" id="loginForm">
+      <h1>Админ-панель</h1>
+      <p class="login-sub">Управление контентом сайта</p>
+      <label>
+        Пароль
+        <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="Введите пароль">
+      </label>
+      <button type="submit" class="btn btn-primary">Войти</button>
+      <p class="login-error" id="loginError" hidden></p>
+      <a href="/" class="login-back">← На сайт</a>
+    </form>
+  </div>
+
+  <!-- Панель управления -->
+  <div class="admin-app" id="adminApp" hidden>
+    <aside class="admin-sidebar">
+      <div class="admin-brand">
+        <h2>Хоровой театр</h2>
+        <span>CMS</span>
+      </div>
+      <nav class="admin-nav" id="adminNav">
+        <button type="button" class="admin-nav-btn is-active" data-tab="hero">Главный экран</button>
+        <button type="button" class="admin-nav-btn" data-tab="about">О коллективе</button>
+        <button type="button" class="admin-nav-btn" data-tab="team">Команда</button>
+        <button type="button" class="admin-nav-btn" data-tab="projects">Афиша</button>
+        <button type="button" class="admin-nav-btn" data-tab="recruitment">В хор</button>
+        <button type="button" class="admin-nav-btn" data-tab="contacts">Контакты</button>
+        <button type="button" class="admin-nav-btn" data-tab="seo">SEO</button>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <a href="/" target="_blank" class="btn btn-outline btn-sm">Открыть сайт</a>
+        <button type="button" class="btn btn-ghost btn-sm" id="logoutBtn">Выйти</button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <h1 id="panelTitle">Главный экран</h1>
+        <button type="button" class="btn btn-primary" id="saveBtn">Сохранить изменения</button>
+      </header>
+
+      <div class="admin-status" id="statusBar" hidden></div>
+
+      <div class="admin-panels" id="adminPanels">
+        <!-- Панели генерируются в admin.js -->
+      </div>
+    </main>
+  </div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>
