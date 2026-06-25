@@ -33,6 +33,7 @@ const V2_DIR = path.join(ROOT, "v2");
 const V3_DIR = path.join(ROOT, "v3");
 const V4_DIR = path.join(ROOT, "v4");
 const V5_DIR = path.join(ROOT, "v5");
+const RED_DRAFT_DIR = path.join(ROOT, "red_draft");
 
 // Допустимые MIME для изображений и видео
 const IMAGE_MIMES = /^image\/(jpeg|png|gif|webp|avif)$/i;
@@ -212,6 +213,9 @@ app.use("/v4", express.static(V4_DIR));
 
 // Пятая версия — playbill-макет v5 (статика, без API)
 app.use("/v5", express.static(V5_DIR));
+
+// red_draft — тёмно-красный макет дизайнера (живые данные из /api/content)
+app.use("/red_draft", express.static(RED_DRAFT_DIR));
 
 // Vue-сборка (лендинг)
 if (fs.existsSync(CLIENT_DIST)) {
@@ -486,6 +490,10 @@ app.get("/v5", (_req, res) => {
   res.sendFile(path.join(V5_DIR, "index.html"));
 });
 
+app.get("/red_draft", (_req, res) => {
+  res.sendFile(path.join(RED_DRAFT_DIR, "index.html"));
+});
+
 app.get("/", (_req, res) => {
   const index = path.join(CLIENT_DIST, "index.html");
   if (fs.existsSync(index)) return res.sendFile(index);
@@ -493,7 +501,7 @@ app.get("/", (_req, res) => {
 });
 
 // Vue Router fallback (если понадобится) — все не-API пути → index.html
-app.get(/^\/(?!api|uploads|admin|v2|v3|v4|v5).*/, (req, res, next) => {
+app.get(/^\/(?!api|uploads|admin|v2|v3|v4|v5|red_draft).*/, (req, res, next) => {
   if (req.path.includes(".")) return next();
   const index = path.join(CLIENT_DIST, "index.html");
   if (fs.existsSync(index)) return res.sendFile(index);
