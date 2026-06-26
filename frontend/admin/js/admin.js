@@ -125,6 +125,7 @@ function showView(name) {
     choir: "viewChoir",
     contacts: "viewContacts",
     location: "viewLocation",
+    gallery: "viewGallery",
     media: "viewMedia",
     password: "viewPassword"
   };
@@ -145,6 +146,7 @@ document.getElementById("sideNav").addEventListener("click", (e) => {
   if (btn.dataset.view === "choir") renderChoir();
   if (btn.dataset.view === "contacts") renderContacts();
   if (btn.dataset.view === "location") renderLocation();
+  if (btn.dataset.view === "gallery") renderGallery();
   if (btn.dataset.view === "media") renderMedia();
   if (btn.dataset.view === "password") renderPassword();
 });
@@ -727,6 +729,67 @@ function renderLocation() {
       toast("Локация сохранена");
     } catch (err) { toast(err.message, "error"); }
   };
+}
+
+/* --- Галерея (статичные фото перед каруселью) --- */
+
+function renderGallery() {
+  const photos = [...((db.gallery && db.gallery.staticPhotos) || [])];
+  while (photos.length < 3) photos.push("");
+
+  const imgSrc = (u) => !u ? "" : (u.startsWith("/") || u.startsWith("http")) ? u : "/uploads/" + u;
+
+  function draw() {
+    document.getElementById("viewGallery").innerHTML = `
+      <h2 class="mb-2" style="font-family:var(--font-heading)">Галерея — статичные фото</h2>
+      <p class="text-muted small mb-4">Три фото в мозаике перед каруселью галереи. Если слот пустой — подставится фото из проектов автоматически.</p>
+      <form id="galleryForm" class="card bg-dark border-secondary"><div class="card-body">
+        <div class="row g-4">
+          ${[0, 1, 2].map((i) => `
+            <div class="col-md-4">
+              <label class="form-label">Фото ${i + 1}</label>
+              <div class="border border-secondary rounded p-2 text-center">
+                ${photos[i]
+                  ? `<img src="${imgSrc(photos[i])}" alt="" style="width:100%;height:160px;object-fit:cover;border-radius:6px">`
+                  : `<div class="text-muted d-flex align-items-center justify-content-center" style="height:160px">Нет фото</div>`}
+                <input type="file" accept="image/*" class="form-control mt-2" data-slot="${i}">
+                ${photos[i] ? `<button type="button" class="btn btn-sm btn-outline-danger mt-2 w-100" data-clear="${i}">Очистить слот</button>` : ""}
+              </div>
+            </div>`).join("")}
+        </div>
+        <button type="submit" class="btn btn-gold mt-4">Сохранить</button>
+      </div></form>`;
+
+    document.querySelectorAll("#viewGallery [data-slot]").forEach((inp) => {
+      inp.onchange = async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        try {
+          const r = await uploadFile(f);
+          photos[Number(inp.dataset.slot)] = r.url;
+          draw();
+        } catch (err) { toast(err.message, "error"); }
+      };
+    });
+
+    document.querySelectorAll("#viewGallery [data-clear]").forEach((b) => {
+      b.onclick = () => { photos[Number(b.dataset.clear)] = ""; draw(); };
+    });
+
+    document.getElementById("galleryForm").onsubmit = async (e) => {
+      e.preventDefault();
+      try {
+        await api("/api/gallery", {
+          method: "PUT",
+          body: JSON.stringify({ staticPhotos: photos.slice(0, 3) })
+        });
+        db = await api("/api/content");
+        toast("Галерея сохранена");
+      } catch (err) { toast(err.message, "error"); }
+    };
+  }
+
+  draw();
 }
 
 /* --- Hero / Главный экран --- */

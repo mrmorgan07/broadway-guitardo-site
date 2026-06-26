@@ -320,21 +320,27 @@ function renderFeature(db) {
 /* ==========================================================================
    ГАЛЕРЕЯ-МОЗАИКА + СЛОГАН
    ========================================================================== */
-function renderGalleryMosaic(db, sloganText) {
-  const photos = [];
+function renderGalleryMosaic(db, sloganText, uploadsPhotos) {
+  // Фолбэк-источник: фото, прикреплённые к проектам
+  const projectPhotos = [];
   (db.projects || []).forEach((p) => {
-    (p.gallery || []).forEach((src) => { const u = imgUrl(src); if (!photos.includes(u)) photos.push(u); });
-    if (p.poster) { const u = imgUrl(p.poster); if (!photos.includes(u)) photos.push(u); }
+    (p.gallery || []).forEach((src) => { const u = imgUrl(src); if (!projectPhotos.includes(u)) projectPhotos.push(u); });
+    if (p.poster) { const u = imgUrl(p.poster); if (!projectPhotos.includes(u)) projectPhotos.push(u); }
   });
-  if (photos.length < 2) return "";
 
-  // Верхние 3 фото — асимметричная сетка рядом с текстом
-  const top3 = photos.slice(0, 3).map((src, i) =>
-    `<div class="gcm__photo gcm__photo--${i}"><img src="${esc(src)}" alt="" loading="lazy"></div>`
-  ).join("");
+  // Карусель: все фото из папки uploads; если список пуст — фолбэк на фото проектов
+  const carouselSrc = (uploadsPhotos && uploadsPhotos.length)
+    ? uploadsPhotos.map(imgUrl)
+    : projectPhotos;
+  if (carouselSrc.length < 2) return "";
 
-  // Остальные — в карусели снизу
-  const carouselItems = photos.slice(0).map((src, i) =>
+  // 3 статичных слота: фото заданы в админке (db.gallery.staticPhotos),
+  // иначе берём первые фото из карусели
+  const adminStatic = (db.gallery && db.gallery.staticPhotos) || [];
+  const stat = [0, 1, 2].map((i) => (adminStatic[i] ? imgUrl(adminStatic[i]) : (carouselSrc[i] || "")));
+
+  // Все фото из uploads — в карусели снизу
+  const carouselItems = carouselSrc.map((src) =>
     `<div class="gcm__slide"><img src="${esc(src)}" alt="" loading="lazy"></div>`
   ).join("");
 
@@ -347,9 +353,9 @@ function renderGalleryMosaic(db, sloganText) {
           <div class="gcm-hero__text">
             <p class="gcm__phrase">${esc(sloganText)}</p>
           </div>
-          ${photos[0] ? `<div class="gcm__photo gcm__photo--0"><img src="${esc(photos[0])}" alt="" loading="lazy"></div>` : ""}
-          ${photos[1] ? `<div class="gcm__photo gcm__photo--1"><img src="${esc(photos[1])}" alt="" loading="lazy"></div>` : ""}
-          ${photos[2] ? `<div class="gcm__photo gcm__photo--2"><img src="${esc(photos[2])}" alt="" loading="lazy"></div>` : ""}
+          ${stat[0] ? `<div class="gcm__photo gcm__photo--0"><img src="${esc(stat[0])}" alt="" loading="lazy"></div>` : ""}
+          ${stat[1] ? `<div class="gcm__photo gcm__photo--1"><img src="${esc(stat[1])}" alt="" loading="lazy"></div>` : ""}
+          ${stat[2] ? `<div class="gcm__photo gcm__photo--2"><img src="${esc(stat[2])}" alt="" loading="lazy"></div>` : ""}
         </div>
 
         <!-- Карусель галереи -->
@@ -792,6 +798,13 @@ async function boot() {
 
   const quote = DB.about?.quote || QUOTE_DEFAULT;
 
+  // Все фото из папки uploads — для карусели галереи
+  let uploadsPhotos = [];
+  try {
+    const pr = await fetch("/api/gallery/photos");
+    if (pr.ok) uploadsPhotos = (await pr.json()).photos || [];
+  } catch (e) { /* фолбэк на фото проектов внутри renderGalleryMosaic */ }
+
   $("#app").innerHTML =
     renderHero(DB) +
     renderAbout(DB.about) +
@@ -799,7 +812,7 @@ async function boot() {
     renderLeaders(DB) +
     renderAfisha(DB.projects) +
     renderFeature(DB) +
-    renderGalleryMosaic(DB, SLOGAN_DEFAULT) +
+    renderGalleryMosaic(DB, SLOGAN_DEFAULT, uploadsPhotos) +
     renderInvite(DB) +
     renderLocation(DB.location);
 

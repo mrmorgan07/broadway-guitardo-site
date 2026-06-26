@@ -310,7 +310,8 @@ function sectionRoutes(sectionKey) {
       choir: db.choirInvite,
       contacts: db.contacts,
       hero: db.hero,
-      location: db.location
+      location: db.location,
+      gallery: db.gallery
     };
     res.json(map[sectionKey] ?? {});
   });
@@ -324,7 +325,8 @@ function sectionRoutes(sectionKey) {
       choir: "choirInvite",
       contacts: "contacts",
       hero: "hero",
-      location: "location"
+      location: "location",
+      gallery: "gallery"
     };
     const dbKey = keyMap[sectionKey];
     db[dbKey] = { ...db[dbKey], ...req.body };
@@ -333,7 +335,7 @@ function sectionRoutes(sectionKey) {
   });
 }
 
-["about", "director", "concertmaster", "choir", "contacts", "hero", "location"].forEach(sectionRoutes);
+["about", "director", "concertmaster", "choir", "contacts", "hero", "location", "gallery"].forEach(sectionRoutes);
 
 /* --- Auth --- */
 
@@ -409,6 +411,26 @@ app.post("/api/upload/video", requireAuth, requireCsrf, (req, res) => {
 /* --- Медиатека --- */
 
 // GET /api/media — список всех загруженных файлов (фото + видео)
+// Публичный список всех фото из папки uploads (для галереи на сайте).
+// Берём только файлы верхнего уровня — папки thumbs/ и videos/ исключаются автоматически.
+app.get("/api/gallery/photos", (_req, res) => {
+  try {
+    if (!fs.existsSync(UPLOADS_DIR)) return res.json({ photos: [] });
+    const photos = fs.readdirSync(UPLOADS_DIR)
+      .filter((f) => {
+        const st = fs.statSync(path.join(UPLOADS_DIR, f));
+        return st.isFile() && /\.(jpe?g|png|gif|webp|avif)$/i.test(f);
+      })
+      .sort((a, b) =>
+        fs.statSync(path.join(UPLOADS_DIR, b)).mtimeMs - fs.statSync(path.join(UPLOADS_DIR, a)).mtimeMs
+      )
+      .map((f) => `/uploads/${f}`);
+    res.json({ photos });
+  } catch (e) {
+    res.json({ photos: [] });
+  }
+});
+
 app.get("/api/media", requireAuth, (_req, res) => {
   function listDir(dir, urlPrefix, typeFilter) {
     if (!fs.existsSync(dir)) return [];
