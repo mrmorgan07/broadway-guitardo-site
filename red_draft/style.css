@@ -1093,6 +1093,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   opacity: 0;
   border-radius: 16px;
   position: relative;
+  display: none; /* по умолчанию скрыт — в потоке только prev/active/next (иначе при многих фото активный слайд коллапсится) */
   transition:
     flex-basis 0.6s cubic-bezier(0.22, 0.61, 0.36, 1),
     max-width  0.6s cubic-bezier(0.22, 0.61, 0.36, 1),
@@ -1103,6 +1104,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 
 /* Центральный — широкий и высокий */
 .gcm__slide--active {
+  display: block;
+  order: 2;
   flex: 0 0 57%;
   max-width: 57%;
   height: clamp(300px, 42vw, 620px);
@@ -1112,11 +1115,14 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 /* Боковые превью */
 .gcm__slide--prev,
 .gcm__slide--next {
+  display: block;
   flex: 0 0 20%;
   max-width: 20%;
   height: clamp(200px, 26vw, 380px);
   opacity: 1;
 }
+.gcm__slide--prev { order: 1; }
+.gcm__slide--next { order: 3; }
 
 /* Затемнение + растворение внешних краёв боковых слайдов */
 .gcm__slide--prev::after,
