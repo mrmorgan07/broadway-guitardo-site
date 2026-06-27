@@ -34,6 +34,8 @@ const V3_DIR = path.join(ROOT, "v3");
 const V4_DIR = path.join(ROOT, "v4");
 const V5_DIR = path.join(ROOT, "v5");
 const RED_DRAFT_DIR = path.join(ROOT, "red_draft");
+const RED_DRAFT2_DIR = path.join(ROOT, "red_draft2");
+const RED_DRAFT3_DIR = path.join(ROOT, "red_draft3");
 
 // Допустимые MIME для изображений и видео
 const IMAGE_MIMES = /^image\/(jpeg|png|gif|webp|avif)$/i;
@@ -59,8 +61,16 @@ function readDb() {
   return JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
 }
 
+// Атомарная запись: пишем во временный файл и переименовываем (rename атомарен на одной ФС).
+// Защищает от повреждённого/частично записанного JSON при сбое или гонке записей.
+function writeFileAtomic(file, content) {
+  const tmp = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, content, "utf8");
+  fs.renameSync(tmp, file);
+}
+
 function writeDb(data) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf8");
+  writeFileAtomic(DB_FILE, JSON.stringify(data, null, 2));
 }
 
 function readAuth() {
@@ -73,7 +83,7 @@ function readAuth() {
 }
 
 function writeAuth(data) {
-  fs.writeFileSync(AUTH_FILE, JSON.stringify(data, null, 2), "utf8");
+  writeFileAtomic(AUTH_FILE, JSON.stringify(data, null, 2));
 }
 
 function slugify(text) {
@@ -132,7 +142,7 @@ function requireCsrf(req, res, next) {
 
 /* --- Загрузка файлов --- */
 
-// Multer для изображений (до 10 МБ → uploads/)
+// Multer для изображений (до 20 МБ → uploads/)
 const imageStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
   filename: (_req, file, cb) => {
@@ -143,7 +153,7 @@ const imageStorage = multer.diskStorage({
 
 const uploadImage = multer({
   storage: imageStorage,
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (IMAGE_MIMES.test(file.mimetype)) return cb(null, true);
     cb(new Error("Допустимы только изображения (jpg, png, gif, webp, avif)"));
@@ -174,11 +184,34 @@ async function createThumbnail(filename) {
   const src = path.join(UPLOADS_DIR, filename);
   const thumbName = `thumb_${path.parse(filename).name}.jpg`;
   const dest = path.join(THUMBS_DIR, thumbName);
-  await sharp(src)
+  // limitInputPixels: false — снимаем лимит на разрешение, чтобы превью
+  // создавалось даже для сверхбольших фото от фотографа (десятки мегапикселей)
+  await sharp(src, { limitInputPixels: false })
     .resize(400, 400, { fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 82 })
     .toFile(dest);
   return `/uploads/thumbs/${thumbName}`;
+}
+
+// Максимальная сторона веб-версии оригинала
+const IMG_MAX_DIM = 2560;
+
+// Оптимизация оригинала: даунскейл до IMG_MAX_DIM + перекодирование в web-качество.
+// Перезаписывает файл на месте. Возвращает новый размер в байтах или null (если пропущено).
+async function optimizeImage(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  if (ext === ".gif") return null; // не трогаем — иначе сломаем анимацию
+  const fp = path.join(UPLOADS_DIR, filename);
+  let pipe = sharp(fp, { limitInputPixels: false })
+    .rotate() // авто-поворот по EXIF (фото с телефона/камеры)
+    .resize(IMG_MAX_DIM, IMG_MAX_DIM, { fit: "inside", withoutEnlargement: true });
+  if (ext === ".png") pipe = pipe.png({ compressionLevel: 9 });
+  else if (ext === ".webp") pipe = pipe.webp({ quality: 82 });
+  else if (ext === ".avif") pipe = pipe.avif({ quality: 55 });
+  else pipe = pipe.jpeg({ quality: 82, mozjpeg: true });
+  const buf = await pipe.toBuffer(); // sharp читает файл целиком до записи — перезапись безопасна
+  fs.writeFileSync(fp, buf);
+  return buf.length;
 }
 
 // Формат размера файла для медиатеки
@@ -216,6 +249,12 @@ app.use("/v5", express.static(V5_DIR));
 
 // red_draft — тёмно-красный макет дизайнера (живые данные из /api/content)
 app.use("/red_draft", express.static(RED_DRAFT_DIR));
+
+// red_draft2 — доработка red_draft: занавес-загрузка, 404, плавные анимации (живые данные)
+app.use("/red_draft2", express.static(RED_DRAFT2_DIR));
+
+// red_draft3 — WOW-песочница: спотлайт+угли, countdown, мобильный UX (живые данные)
+app.use("/red_draft3", express.static(RED_DRAFT3_DIR));
 
 // Vue-сборка (лендинг)
 if (fs.existsSync(CLIENT_DIST)) {
@@ -348,7 +387,9 @@ app.post("/api/login", (req, res) => {
   }
 
   const { token, csrfToken } = createSession(login);
-  res.json({ token, csrfToken, login });
+  // Сигналим админке, что всё ещё используется пароль по умолчанию
+  const mustChangePassword = bcrypt.compareSync("12345", auth.passwordHash);
+  res.json({ token, csrfToken, login, mustChangePassword });
 });
 
 app.post("/api/logout", requireAuth, (_req, res) => {
@@ -359,7 +400,8 @@ app.post("/api/logout", requireAuth, (_req, res) => {
 app.get("/api/auth/check", (req, res) => {
   const token = req.headers["x-auth-token"] || req.cookies?.authToken;
   const session = getSession(token);
-  res.json({ authenticated: !!session, login: session?.login || null });
+  const mustChangePassword = session ? bcrypt.compareSync("12345", readAuth().passwordHash) : false;
+  res.json({ authenticated: !!session, login: session?.login || null, mustChangePassword });
 });
 
 app.put("/api/auth/password", requireAuth, requireCsrf, (req, res) => {
@@ -383,17 +425,25 @@ app.put("/api/auth/password", requireAuth, requireCsrf, (req, res) => {
 
 /* --- Upload --- */
 
-// Загрузка изображения (до 10 МБ)
+// Загрузка изображения (до 20 МБ)
 app.post("/api/upload", requireAuth, requireCsrf, (req, res) => {
   uploadImage.single("image")(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: "Файл не получен" });
 
     const url = `/uploads/${req.file.filename}`;
+
+    // Оптимизируем оригинал (даунскейл + перекодирование), чтобы сайт грузился быстро
+    let size = req.file.size;
+    try {
+      const newSize = await optimizeImage(req.file.filename);
+      if (newSize) size = newSize;
+    } catch (e) { console.warn("Оптимизация не удалась:", e.message); }
+
     let thumb = null;
     try { thumb = await createThumbnail(req.file.filename); }
     catch (e) { console.warn("Превью не создано:", e.message); }
-    res.json({ url, thumb, filename: req.file.filename, size: fmtSize(req.file.size) });
+    res.json({ url, thumb, filename: req.file.filename, size: fmtSize(size) });
   });
 });
 
@@ -486,6 +536,19 @@ app.delete("/api/media/:type/:filename", requireAuth, requireCsrf, (req, res) =>
   }
 
   if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Файл не найден" });
+
+  // Защита от удаления используемого файла: ищем имя файла в контенте.
+  // Перекрыть можно явным ?force=1 (пользователь подтвердил в админке).
+  if (req.query.force !== "1") {
+    const dbStr = JSON.stringify(readDb());
+    if (dbStr.includes(filename)) {
+      return res.status(409).json({
+        error: "Файл используется в контенте сайта",
+        inUse: true
+      });
+    }
+  }
+
   fs.unlinkSync(filePath);
   res.json({ ok: true });
 });
@@ -516,6 +579,14 @@ app.get("/red_draft", (_req, res) => {
   res.sendFile(path.join(RED_DRAFT_DIR, "index.html"));
 });
 
+app.get("/red_draft2", (_req, res) => {
+  res.sendFile(path.join(RED_DRAFT2_DIR, "index.html"));
+});
+
+app.get("/red_draft3", (_req, res) => {
+  res.sendFile(path.join(RED_DRAFT3_DIR, "index.html"));
+});
+
 app.get("/", (_req, res) => {
   const index = path.join(CLIENT_DIST, "index.html");
   if (fs.existsSync(index)) return res.sendFile(index);
@@ -523,11 +594,19 @@ app.get("/", (_req, res) => {
 });
 
 // Vue Router fallback (если понадобится) — все не-API пути → index.html
-app.get(/^\/(?!api|uploads|admin|v2|v3|v4|v5|red_draft).*/, (req, res, next) => {
+app.get(/^\/(?!api|uploads|admin|v2|v3|v4|v5|red_draft|red_draft2|red_draft3).*/, (req, res, next) => {
   if (req.path.includes(".")) return next();
   const index = path.join(CLIENT_DIST, "index.html");
   if (fs.existsSync(index)) return res.sendFile(index);
   next();
+});
+
+// 404 — всё, что не поймали выше: театральная страница red_draft2
+app.use((req, res) => {
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ error: "Не найдено" });
+  }
+  res.status(404).sendFile(path.join(RED_DRAFT2_DIR, "404.html"));
 });
 
 /* --- Запуск --- */
