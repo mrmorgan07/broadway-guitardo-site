@@ -277,9 +277,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .logo, .logo b { animation: none; }
-}
+/* Мерцание логотипа форсируем даже при Reduce Motion (эффект мягкий, не строб) */
 
 .nav {
   display: flex;
