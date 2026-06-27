@@ -1037,10 +1037,11 @@ async function boot() {
   initUI();
 
   // Увертюра-занавес: держим минимум N мс (полную — раз за сессию), затем поднимаем.
-  // prefers-reduced-motion — без удержания; клик по занавесу — пропустить.
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Удержание НЕ зависит от reduced-motion (это задержка, а не «движение») —
+  // под reduced-motion CSS гасит лампочки/анимацию штор, но занавес всё равно показывается.
+  // Клик по занавесу — пропустить.
   const seen = sessionStorage.getItem("seenBoot");
-  const minShow = reduce ? 0 : (seen ? 1400 : 3200);
+  const minShow = seen ? 1400 : 3200;
   sessionStorage.setItem("seenBoot", "1");
 
   let curtainUp = false;
