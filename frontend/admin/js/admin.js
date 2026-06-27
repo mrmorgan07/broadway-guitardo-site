@@ -17,7 +17,10 @@ const AUTH = { token: "choir_token", csrf: "choir_csrf" };
 let db = null;
 let editingProjectId = null;
 let confirmCallback = null;
-const confirmModal = () => new bootstrap.Modal(document.getElementById("confirmModal"));
+let mustChangePassword = false;  // используется ли пароль по умолчанию
+let isDirty = false;             // есть несохранённые изменения в форме
+// Единый экземпляр модалки (getOrCreateInstance), иначе .hide() закрывает не тот объект, что показан
+const confirmModal = () => bootstrap.Modal.getOrCreateInstance(document.getElementById("confirmModal"));
 
 /* --- API --- */
 
@@ -33,7 +36,14 @@ function headers(json = true) {
 async function api(path, opts = {}) {
   const res = await fetch(path, { ...opts, headers: { ...headers(opts.body !== undefined && !(opts.body instanceof FormData)), ...opts.headers } });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Ошибка запроса");
+  if (!res.ok) {
+    const err = new Error(data.error || "Ошибка запроса");
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  // Успешный мутирующий запрос = данные сохранены → форма «чистая»
+  if (opts.method && opts.method !== "GET") isDirty = false;
   return data;
 }
 
@@ -72,7 +82,23 @@ document.getElementById("confirmOk").addEventListener("click", () => {
 async function checkAuth() {
   const res = await fetch("/api/auth/check", { headers: headers() });
   const data = await res.json();
+  mustChangePassword = !!data.mustChangePassword;
   return data.authenticated;
+}
+
+// Красный баннер-предупреждение о пароле по умолчанию
+function renderSecurityBanner() {
+  const existing = document.getElementById("secBanner");
+  if (!mustChangePassword) { existing?.remove(); return; }
+  if (existing) return;
+  const app = document.getElementById("adminApp");
+  const b = document.createElement("div");
+  b.id = "secBanner";
+  b.className = "sec-banner";
+  b.innerHTML = `<span>⚠️ Вы используете пароль по умолчанию <b>admin / 12345</b>. Смените его — иначе сайтом может управлять кто угодно.</span>
+    <button class="btn btn-sm btn-light" id="secBannerBtn">Сменить пароль</button>`;
+  app.prepend(b);
+  document.getElementById("secBannerBtn").onclick = () => { showView("password"); renderPassword(); };
 }
 
 function showApp(show) {
@@ -94,6 +120,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     });
     sessionStorage.setItem(AUTH.token, data.token);
     sessionStorage.setItem(AUTH.csrf, data.csrfToken);
+    mustChangePassword = !!data.mustChangePassword;
     err.classList.add("d-none");
     showApp(true);
     await initApp();
@@ -131,11 +158,13 @@ function showView(name) {
   };
   document.getElementById(map[name])?.classList.remove("d-none");
   document.querySelector(`#sideNav [data-view="${name === "projectEdit" ? "projects" : name}"]`)?.classList.add("active");
+  isDirty = false; // новый вид — форма ещё не тронута
 }
 
 document.getElementById("sideNav").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-view]");
   if (!btn) return;
+  if (isDirty && !confirm("Есть несохранённые изменения. Перейти и потерять их?")) return;
   showView(btn.dataset.view);
   if (btn.dataset.view === "dashboard") renderDashboard();
   if (btn.dataset.view === "projects") renderProjectsList();
@@ -149,6 +178,28 @@ document.getElementById("sideNav").addEventListener("click", (e) => {
   if (btn.dataset.view === "gallery") renderGallery();
   if (btn.dataset.view === "media") renderMedia();
   if (btn.dataset.view === "password") renderPassword();
+  toggleSidebar(false); // закрыть мобильное меню после выбора
+});
+
+// Мобильное меню (off-canvas сайдбар)
+function toggleSidebar(open) {
+  const sb = document.querySelector(".admin-sidebar");
+  const bd = document.getElementById("adminBackdrop");
+  if (!sb || !bd) return;
+  const show = open === undefined ? !sb.classList.contains("open") : open;
+  sb.classList.toggle("open", show);
+  bd.classList.toggle("show", show);
+}
+document.getElementById("adminBurger")?.addEventListener("click", () => toggleSidebar());
+document.getElementById("adminBackdrop")?.addEventListener("click", () => toggleSidebar(false));
+
+// Любой ввод в форме админки = есть несохранённые изменения
+document.addEventListener("input", (e) => {
+  if (e.target.closest(".admin-view form")) isDirty = true;
+});
+// Предупреждение при попытке закрыть/обновить вкладку с несохранёнными правками
+window.addEventListener("beforeunload", (e) => {
+  if (isDirty) { e.preventDefault(); e.returnValue = ""; }
 });
 
 /* --- Dashboard --- */
@@ -171,32 +222,31 @@ function renderDashboard() {
 function renderProjectsList() {
   const el = document.getElementById("viewProjects");
   el.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 style="font-family:var(--font-heading)">Спектакли</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <h2 class="m-0" style="font-family:var(--font-heading)">Спектакли</h2>
       <button class="btn btn-gold" id="addProjectBtn">+ Добавить спектакль</button>
     </div>
-    <div class="table-responsive">
-      <table class="table table-dark table-hover align-middle">
-        <thead><tr><th>Название</th><th>Дата</th><th>Тег</th><th></th></tr></thead>
-        <tbody id="projectsTableBody"></tbody>
-      </table>
-    </div>`;
+    <div class="proj-list" id="projectsList"></div>`;
 
-  const tbody = document.getElementById("projectsTableBody");
-  tbody.innerHTML = (db.projects || []).map((p) => `
-    <tr>
-      <td><strong>${esc(p.title)}</strong><br><small class="text-muted">${esc(p.id)}</small></td>
-      <td>${esc(p.date)}</td>
-      <td><span class="badge bg-secondary">${esc(p.tag)}</span></td>
-      <td class="text-end">
-        <button class="btn btn-sm btn-outline-warning me-1" data-edit="${p.id}">Редактировать</button>
+  const list = document.getElementById("projectsList");
+  list.innerHTML = (db.projects || []).map((p) => `
+    <div class="proj-card">
+      <div class="proj-card__main">
+        <div class="proj-card__title">${esc(p.title)}</div>
+        <div class="proj-card__meta">
+          ${p.date ? `<span>${esc(p.date)}</span>` : ""}
+          ${p.tag ? `<span class="badge bg-secondary">${esc(p.tag)}</span>` : ""}
+        </div>
+      </div>
+      <div class="proj-card__actions">
+        <button class="btn btn-sm btn-outline-warning" data-edit="${p.id}">Редактировать</button>
         <button class="btn btn-sm btn-outline-danger" data-del="${p.id}">Удалить</button>
-      </td>
-    </tr>`).join("");
+      </div>
+    </div>`).join("");
 
   document.getElementById("addProjectBtn").onclick = () => openProjectEdit(null);
-  tbody.querySelectorAll("[data-edit]").forEach((b) => b.onclick = () => openProjectEdit(b.dataset.edit));
-  tbody.querySelectorAll("[data-del]").forEach((b) => b.onclick = () => deleteProject(b.dataset.del));
+  list.querySelectorAll("[data-edit]").forEach((b) => b.onclick = () => openProjectEdit(b.dataset.edit));
+  list.querySelectorAll("[data-del]").forEach((b) => b.onclick = () => deleteProject(b.dataset.del));
 }
 
 function esc(s) { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
@@ -219,13 +269,9 @@ function openProjectEdit(id) {
     <form id="projectForm" class="card bg-dark border-secondary">
       <div class="card-body">
         <div class="row g-3">
-          <div class="col-md-8">
+          <div class="col-12">
             <label class="form-label">Название *</label>
             <input class="form-control" name="title" value="${esc(p.title)}" required>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">ID (латиница)</label>
-            <input class="form-control" name="id" value="${esc(p.id)}" ${id ? "readonly" : ""} placeholder="bal_vampirov">
           </div>
           <div class="col-md-6">
             <label class="form-label">Дата и время</label>
@@ -273,6 +319,15 @@ function openProjectEdit(id) {
           <div class="col-12">
             <label class="form-label">Ссылка на билеты</label>
             <input class="form-control" name="ticketLink" type="url" value="${esc(p.ticketLink)}">
+          </div>
+          <div class="col-12">
+            <details class="adv-block">
+              <summary>Дополнительно (технические настройки)</summary>
+              <div class="mt-3">
+                <label class="form-label">ID (латиница)${id ? "" : " — можно оставить пустым, создастся автоматически из названия"}</label>
+                <input class="form-control" name="id" value="${esc(p.id)}" ${id ? "readonly" : ""} placeholder="bal_vampirov">
+              </div>
+            </details>
           </div>
         </div>
         <button type="submit" class="btn btn-gold mt-4">Сохранить спектакль</button>
@@ -680,18 +735,21 @@ function renderLocation() {
         <input class="form-control" name="address" id="locAddress" value="${esc(l.address)}" placeholder="Москва, Тверская улица, 1">
       </div>
       <div class="col-12">
-        <label class="form-label">Координаты для красной метки (широта, долгота) — необязательно</label>
-        <input class="form-control" name="coords" id="locCoords" value="${esc(l.coords)}" placeholder="55.770050, 37.679600">
-        <small class="text-muted">На Яндекс.Картах: ПКМ по зданию → «Что здесь?» → скопировать координаты. Если заполнено — на здании будет красная метка.</small>
-      </div>
-      <div class="col-12">
         <label class="form-label">Как пройти (описание, необязательно)</label>
         <textarea class="form-control" name="note" rows="3">${esc(l.note)}</textarea>
       </div>
       <div class="col-12">
-        <label class="form-label">Свой код карты (src из конструктора Яндекс.Карт, необязательно)</label>
-        <input class="form-control" name="mapUrl" id="locMapUrl" value="${esc(l.mapUrl)}" placeholder="https://yandex.ru/map-widget/v1/...">
-        <small class="text-muted">Если оставить пустым — карта построится автоматически по адресу.</small>
+        <details class="adv-block">
+          <summary>Дополнительно: метка и свой код карты</summary>
+          <div class="mt-3">
+            <label class="form-label">Координаты для красной метки (широта, долгота)</label>
+            <input class="form-control mb-1" name="coords" id="locCoords" value="${esc(l.coords)}" placeholder="55.770050, 37.679600">
+            <small class="text-muted d-block mb-3">На Яндекс.Картах: ПКМ по зданию → «Что здесь?» → скопировать. Если заполнено — на здании будет красная метка.</small>
+            <label class="form-label">Свой код карты (src из конструктора Яндекс.Карт)</label>
+            <input class="form-control mb-1" name="mapUrl" id="locMapUrl" value="${esc(l.mapUrl)}" placeholder="https://yandex.ru/map-widget/v1/...">
+            <small class="text-muted">Если пусто — карта построится автоматически по адресу.</small>
+          </div>
+        </details>
       </div>
       <div class="col-12">
         <label class="form-label">Предпросмотр карты</label>
@@ -906,14 +964,11 @@ function renderHeroSection() {
   document.getElementById("heroVideoBgUpload").addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const prog = document.getElementById("heroVideoBgProgress");
-    prog.classList.remove("d-none");
     try {
-      const r = await uploadFile(file, "video");
+      const r = await uploadVideoWithProgress(file, document.getElementById("heroVideoBgProgress"), "Загрузка видео…");
       document.getElementById("heroVideoFileInput").value = r.url;
-      toast(`Видео загружено: ${r.url}`);
+      toast("Видео загружено");
     } catch (err) { toast(err.message, "error"); }
-    prog.classList.add("d-none");
     e.target.value = "";
   });
 
@@ -921,14 +976,11 @@ function renderHeroSection() {
   document.getElementById("heroTrailerUpload").addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const prog = document.getElementById("heroTrailerProgress");
-    prog.classList.remove("d-none");
     try {
-      const r = await uploadFile(file, "video");
+      const r = await uploadVideoWithProgress(file, document.getElementById("heroTrailerProgress"), "Загрузка трейлера…");
       document.getElementById("heroTrailerFileInput").value = r.url;
-      toast(`Трейлер загружен: ${r.url}`);
+      toast("Трейлер загружен");
     } catch (err) { toast(err.message, "error"); }
-    prog.classList.add("d-none");
     e.target.value = "";
   });
 
@@ -968,28 +1020,69 @@ function renderPassword() {
       });
       toast("Пароль изменён");
       e.target.reset();
+      mustChangePassword = false;
+      renderSecurityBanner();
     } catch (err) { toast(err.message, "error"); }
   };
 }
 
 /* --- Медиатека --- */
 
-async function uploadFile(file, type = "image") {
-  const fd = new FormData();
-  if (type === "video") {
-    fd.append("video", file);
-  } else {
-    fd.append("image", file);
-  }
+// onProgress(percent) — необязательный колбэк; если задан, грузим через XHR с реальным прогрессом
+function uploadFile(file, type = "image", onProgress = null) {
+  const field = type === "video" ? "video" : "image";
   const endpoint = type === "video" ? "/api/upload/video" : "/api/upload";
-  return api(endpoint, {
-    method: "POST",
-    body: fd,
-    headers: {
-      "X-Auth-Token": sessionStorage.getItem(AUTH.token),
-      "X-CSRF-Token": sessionStorage.getItem(AUTH.csrf)
-    }
+  const fd = new FormData();
+  fd.append(field, file);
+
+  // Быстрый путь без прогресса (изображения) — через общий api()
+  if (!onProgress) {
+    return api(endpoint, {
+      method: "POST",
+      body: fd,
+      headers: {
+        "X-Auth-Token": sessionStorage.getItem(AUTH.token),
+        "X-CSRF-Token": sessionStorage.getItem(AUTH.csrf)
+      }
+    });
+  }
+
+  // Путь с реальным прогрессом (видео) — XMLHttpRequest
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", endpoint);
+    xhr.setRequestHeader("X-Auth-Token", sessionStorage.getItem(AUTH.token) || "");
+    xhr.setRequestHeader("X-CSRF-Token", sessionStorage.getItem(AUTH.csrf) || "");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      let data = {};
+      try { data = JSON.parse(xhr.responseText); } catch { /* ignore */ }
+      if (xhr.status >= 200 && xhr.status < 300) { isDirty = false; resolve(data); }
+      else reject(new Error(data.error || "Ошибка загрузки"));
+    };
+    xhr.onerror = () => reject(new Error("Ошибка сети при загрузке"));
+    xhr.send(fd);
   });
+}
+
+// Загрузка видео с реальным прогресс-баром. progEl — контейнер с .progress-bar и текстом.
+async function uploadVideoWithProgress(file, progEl, label = "Загрузка…") {
+  const bar = progEl.querySelector(".progress-bar");
+  const txt = progEl.querySelector(".text-muted, .small");
+  progEl.classList.remove("d-none");
+  if (bar) { bar.classList.remove("progress-bar-animated"); bar.style.width = "0%"; }
+  if (txt) txt.textContent = `${label} 0%`;
+  try {
+    return await uploadFile(file, "video", (pct) => {
+      if (bar) bar.style.width = pct + "%";
+      if (txt) txt.textContent = pct < 100 ? `${label} ${pct}%` : "Обработка на сервере…";
+    });
+  } finally {
+    progEl.classList.add("d-none");
+    if (bar) { bar.classList.add("progress-bar-animated"); bar.style.width = "100%"; }
+  }
 }
 
 let mediaData = { images: [], videos: [] };
@@ -1097,21 +1190,29 @@ async function renderMedia() {
     await renderMedia();
   });
 
-  // Загрузка видео (один файл)
+  // Загрузка видео (один файл) — с реальным прогрессом
   document.getElementById("uploadVideoInput").addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const prog = document.getElementById("mediaUploadProgress");
     const label = document.getElementById("mediaUploadLabel");
+    const bar = prog.querySelector(".progress-bar");
+    const sizeMb = (file.size / 1024 / 1024).toFixed(1);
     prog.classList.remove("d-none");
-    label.textContent = `Загружаю видео ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} МБ)…`;
+    if (bar) { bar.classList.remove("progress-bar-animated"); bar.style.width = "0%"; }
     try {
-      const result = await uploadFile(file, "video");
-      toast(`Видео загружено: ${result.url}`);
+      await uploadFile(file, "video", (pct) => {
+        if (bar) bar.style.width = pct + "%";
+        label.textContent = pct < 100
+          ? `Загрузка ${file.name} (${sizeMb} МБ)… ${pct}%`
+          : "Обработка на сервере…";
+      });
+      toast("Видео загружено");
     } catch (err) {
       toast(`Ошибка загрузки видео: ${err.message}`, "error");
     }
     prog.classList.add("d-none");
+    if (bar) { bar.classList.add("progress-bar-animated"); bar.style.width = "100%"; }
     e.target.value = "";
     await renderMedia();
   });
@@ -1130,15 +1231,25 @@ async function renderMedia() {
     if (e.target.closest(".del-media-btn")) {
       const filename = card.dataset.filename;
       const type = card.dataset.type;
+      const doDelete = async (force) => {
+        const q = force ? "?force=1" : "";
+        await api(`/api/media/${type}/${encodeURIComponent(filename)}${q}`, { method: "DELETE" });
+        toast("Файл удалён");
+        await renderMedia();
+      };
       confirmDialog(`Удалить файл «${filename}»? Это действие нельзя отменить.`, async () => {
         try {
-          await api(`/api/media/${type}/${encodeURIComponent(filename)}`, {
-            method: "DELETE"
-          });
-          toast("Файл удалён");
-          await renderMedia();
+          await doDelete(false);
         } catch (err) {
-          toast(err.message, "error");
+          if (err.status === 409 && err.data?.inUse) {
+            // Ждём, пока первая модалка закроется, и показываем второе подтверждение
+            setTimeout(() => confirmDialog(
+              `⚠️ Файл «${filename}» используется на сайте. Если удалить — там появится битая картинка. Всё равно удалить?`,
+              async () => { try { await doDelete(true); } catch (e2) { toast(e2.message, "error"); } }
+            ), 350);
+          } else {
+            toast(err.message, "error");
+          }
         }
       });
     }
@@ -1150,6 +1261,7 @@ async function renderMedia() {
 async function initApp() {
   db = await api("/api/content");
   renderDashboard();
+  renderSecurityBanner();
 }
 
 (async () => {

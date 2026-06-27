@@ -1,59 +1,161 @@
 :root {
-  --gold: #d4af37;
+  /* Брендовая палитра — в тон сайту (бордо/cream на тёплом тёмном) */
+  --bg: #0d0a0b;
+  --panel: #16110f;
+  --panel-2: #1d1614;
+  --cream: #f3ece2;
+  --text: #cfc8be;
+  --muted: #8c857c;
+  --wine: #9e2436;
+  --wine-bright: #c0304a;
+  --cta: #e8121f;
+  --cta-bright: #ff2a37;
+  --line: rgba(243, 236, 226, 0.12);
+  --line-soft: rgba(243, 236, 226, 0.07);
+  /* Легаси: в разметке местами стоит color:var(--gold) — теперь это cream */
+  --gold: #f3ece2;
   --burgundy: #8b0000;
   --font-heading: "Playfair Display", Georgia, serif;
 }
 
-body { font-family: Inter, system-ui, sans-serif; background: #0a0a0c; }
+body { font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--text); }
 
+/* === ВХОД === */
 .login-wrap {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: radial-gradient(ellipse at center, rgba(139,0,0,.2), transparent 70%);
+  padding: 1rem;
+  background:
+    radial-gradient(ellipse at center, rgba(158, 36, 54, 0.22), transparent 70%);
 }
+.login-card {
+  width: min(100%, 400px);
+  background: var(--panel);
+  border-color: var(--line);
+}
+.login-card h1 { color: var(--cream) !important; }
 
-.login-card { width: min(100%, 400px); background: #121218; border-color: rgba(212,175,55,.2); }
-
+/* === КНОПКИ === */
 .btn-gold {
-  background: linear-gradient(135deg, var(--gold), #b8962e);
-  color: #1a1000;
+  background: var(--wine);
+  color: #fff;
   font-weight: 600;
   border: none;
 }
-.btn-gold:hover { filter: brightness(1.08); color: #1a1000; }
+.btn-gold:hover { background: var(--wine-bright); color: #fff; }
+.btn-gold:focus-visible { box-shadow: 0 0 0 3px rgba(158, 36, 54, 0.4); }
 
+/* === МАКЕТ === */
+.admin-content { min-height: 100vh; }
+
+/* Мобильный топбар с бургером (скрыт на десктопе) */
+.admin-topbar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 1040;
+}
+.admin-burger {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--cream);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.admin-topbar-title {
+  font-family: var(--font-heading);
+  color: var(--cream);
+  font-size: 1.05rem;
+}
+
+.admin-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1045;
+}
+.admin-backdrop.show { display: block; }
+
+/* === САЙДБАР === */
 .admin-sidebar {
   width: 260px;
   min-height: 100vh;
-  background: #121218;
-  border-right: 1px solid rgba(212,175,55,.15);
+  background: var(--panel);
+  border-right: 1px solid var(--line);
   position: sticky;
   top: 0;
   height: 100vh;
   overflow-y: auto;
 }
-
 .admin-sidebar .nav-link {
-  color: #b8b8c0;
+  color: var(--text);
   text-align: left;
-  border-radius: 8px;
+  border-radius: 10px;
   width: 100%;
   border: none;
   background: none;
+  padding: 0.6rem 0.85rem;
+  transition: background 0.2s, color 0.2s;
 }
-.admin-sidebar .nav-link:hover { background: rgba(255,255,255,.05); color: #fff; }
-.admin-sidebar .nav-link.active { background: rgba(212,175,55,.15); color: var(--gold); }
+.admin-sidebar .nav-link:hover { background: rgba(243, 236, 226, 0.05); color: var(--cream); }
+.admin-sidebar .nav-link.active {
+  background: rgba(158, 36, 54, 0.18);
+  color: var(--cream);
+  box-shadow: inset 3px 0 0 var(--wine);
+}
 
-.admin-content { min-height: 100vh; }
-
+/* === КАРТОЧКИ/БЛОКИ === */
 .stat-card {
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(212,175,55,.2);
-  border-radius: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
   padding: 1.25rem;
 }
+.stat-card .fs-2, .stat-card .fs-5 { color: var(--cream); }
 
+.card.bg-dark { background: var(--panel) !important; border-color: var(--line) !important; }
+
+/* === СПИСОК СПЕКТАКЛЕЙ (карточки вместо таблицы — влезает на мобиле) === */
+.proj-list { display: flex; flex-direction: column; gap: 10px; }
+.proj-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.proj-card__title { font-weight: 600; color: var(--cream); }
+.proj-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.proj-card__actions { display: flex; gap: 8px; flex-shrink: 0; }
+@media (max-width: 575px) {
+  .proj-card__actions { width: 100%; }
+  .proj-card__actions .btn { flex: 1; }
+}
+
+/* === СОРТИРУЕМАЯ ГАЛЕРЕЯ === */
 .gallery-sortable { list-style: none; padding: 0; }
 .gallery-sortable li {
   display: flex;
@@ -61,21 +163,22 @@ body { font-family: Inter, system-ui, sans-serif; background: #0a0a0c; }
   gap: .75rem;
   padding: .5rem;
   margin-bottom: .5rem;
-  background: rgba(0,0,0,.3);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, .3);
+  border: 1px solid var(--line);
+  border-radius: 10px;
   cursor: grab;
 }
 .gallery-sortable li.dragging { opacity: .5; }
-.gallery-sortable img { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; }
+.gallery-sortable img { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; }
 
+/* === СОЛИСТЫ === */
 .soloist-row { display: flex; gap: .5rem; margin-bottom: .5rem; align-items: center; }
 .soloist-photo-box { display: flex; align-items: center; gap: .4rem; flex: 0 0 auto; }
 .soloist-thumb {
-  width: 48px; height: 48px; border-radius: 6px; object-fit: cover;
-  background: #2a2a2a; border: 1px solid #444; flex: 0 0 auto;
+  width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
+  background: var(--panel-2); border: 1px solid var(--line); flex: 0 0 auto;
   display: flex; align-items: center; justify-content: center;
-  font-size: 10px; color: #888; text-align: center; line-height: 1.1;
+  font-size: 10px; color: var(--muted); text-align: center; line-height: 1.1;
 }
 .soloist-thumb--empty { padding: 2px; }
 .soloist-name { flex: 1 1 40%; }
@@ -85,52 +188,79 @@ body { font-family: Inter, system-ui, sans-serif; background: #0a0a0c; }
   .soloist-name, .soloist-role { flex: 1 1 100%; }
 }
 
-/* --- Медиатека --- */
+/* === МЕДИАТЕКА === */
 .media-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 12px;
 }
-
 .media-card {
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
   overflow: hidden;
-  transition: border-color .2s;
+  transition: border-color .2s, transform .2s;
 }
-.media-card:hover { border-color: var(--gold); }
-
-.media-card-preview {
-  width: 100%;
-  height: 110px;
-  object-fit: cover;
-  display: block;
-}
-
+.media-card:hover { border-color: var(--wine); transform: translateY(-2px); }
+.media-card-preview { width: 100%; height: 110px; object-fit: cover; display: block; }
 .media-card-video {
-  background: #1a1a2e;
+  background: var(--panel-2);
+  display: flex; align-items: center; justify-content: center;
+}
+.media-play-icon { font-size: 2rem; opacity: .6; }
+.media-card-info { padding: 6px 8px; }
+
+.btn-xs { padding: 1px 6px; font-size: 0.75rem; line-height: 1.4; }
+
+/* === БЛОК «ДОПОЛНИТЕЛЬНО» === */
+.adv-block {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: rgba(243, 236, 226, 0.02);
+}
+.adv-block summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+  list-style: none;
+  user-select: none;
+}
+.adv-block summary::-webkit-details-marker { display: none; }
+.adv-block summary::before { content: "▸ "; color: var(--wine); }
+.adv-block[open] summary::before { content: "▾ "; }
+
+/* === БАННЕР О ПАРОЛЕ === */
+.sec-banner {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  background: var(--cta);
+  color: #fff;
+  font-size: 0.92rem;
+  text-align: center;
 }
+.sec-banner b { font-weight: 700; }
 
-.media-play-icon {
-  font-size: 2rem;
-  opacity: .6;
-}
-
-.media-card-info {
-  padding: 6px 8px;
-}
-
-.btn-xs {
-  padding: 1px 6px;
-  font-size: 0.75rem;
-  line-height: 1.4;
-}
-
+/* === МОБИЛЬНАЯ НАВИГАЦИЯ === */
 @media (max-width: 768px) {
-  .admin-sidebar { width: 100%; height: auto; position: relative; min-height: auto; }
-  .d-flex { flex-direction: column; }
+  .admin-topbar { display: flex; }
+
+  .admin-sidebar {
+    position: fixed;
+    left: 0; top: 0;
+    width: 270px;
+    max-width: 84vw;
+    height: 100vh;
+    z-index: 1050;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  }
+  .admin-sidebar.open { transform: translateX(0); }
+
+  .admin-content { padding-top: 1rem; }
 }
