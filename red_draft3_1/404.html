@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Страница не найдена — Broadway Guitardo</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: "Druzhok";
+      src: url("/red_draft2/fonts/DRUZHOK.otf") format("opentype");
+      font-weight: 400 700; font-display: swap;
+    }
+    @font-face {
+      font-family: "Futura PT Local";
+      src: url("/red_draft2/fonts/FuturaMediumC.ttf") format("truetype");
+      font-weight: 500; font-display: swap;
+    }
+    @font-face {
+      font-family: "Avenir Next";
+      src: local("Avenir Next"), url("/red_draft2/fonts/AvenirNext-Regular.ttf") format("truetype");
+      font-weight: 400; font-display: swap;
+    }
+    :root {
+      --bg: #0a0809; --red: #ee0000; --red-bright: #ff0a14;
+      --cream: #f3ece2; --text: #e7ddd1; --muted: rgba(231, 221, 209, 0.55);
+      --font-display: "Druzhok", "Playfair Display", Georgia, serif;
+      --font-body: "Avenir Next", system-ui, -apple-system, sans-serif;
+      --font-label: "Futura PT Local", "Avenir Next", system-ui, sans-serif;
+      --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100svh;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 80% 60% at 50% 30%, rgba(120, 6, 6, 0.4) 0%, transparent 70%),
+        linear-gradient(180deg, rgba(10, 8, 9, 0.4) 0%, rgba(10, 8, 9, 0.95) 100%);
+      color: var(--text);
+      font-family: var(--font-body);
+      text-align: center;
+      padding: 2rem;
+      overflow: hidden;
+    }
+    .e404 { position: relative; z-index: 1; max-width: 640px; }
+    .e404__code {
+      font-family: var(--font-display);
+      font-size: clamp(7rem, 28vw, 18rem);
+      line-height: 0.85;
+      color: var(--red);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      text-shadow: 0 10px 70px rgba(238, 0, 0, 0.45);
+      animation: flicker 4.5s infinite;
+    }
+    .e404__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 5vw, 3rem);
+      text-transform: uppercase;
+      color: var(--cream);
+      margin: 14px 0 18px;
+      line-height: 1.05;
+    }
+    .e404__text {
+      font-size: clamp(15px, 2vw, 18px);
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      max-width: 46ch;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+    .e404__line { width: 70px; height: 2px; background: var(--red); margin: 0 auto 30px; }
+    .e404__btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-label);
+      font-size: 13px; font-weight: 500;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: #fff; background: var(--red);
+      padding: 16px 38px; border-radius: 999px;
+      transition: transform 0.25s var(--ease), background 0.25s var(--ease), box-shadow 0.25s var(--ease);
+    }
+    .e404__btn:hover {
+      background: var(--red-bright);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(238, 0, 0, 0.4);
+    }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      92% { opacity: 1; }
+      93% { opacity: 0.35; }
+      94% { opacity: 1; }
+      96% { opacity: 0.5; }
+      97% { opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .e404__code { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="e404">
+    <p class="e404__code">404</p>
+    <h1 class="e404__title">Занавес опущен</h1>
+    <div class="e404__line"></div>
+    <p class="e404__text">
+      Этой сцены нет в нашей афише — страница не найдена или была снята с показа.
+      Вернитесь в зал, спектакль вот-вот начнётся.
+    </p>
+    <a href="/red_draft2" class="e404__btn">Вернуться на главную</a>
+  </main>
+</body>
+</html>
