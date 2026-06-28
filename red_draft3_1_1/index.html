@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broadway Guitardo — red_draft3_1_1</title>
+  <meta name="description" content="Broadway Guitardo — место, где музыка, сцена и атмосфера объединяются в полноценный опыт.">
+
+  <!-- Резервная антиква (если DRUZHOK не загрузится) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/red_draft3_1_1/style.css?v=20260659">
+</head>
+<body>
+
+  <!-- ФАКТУРА: плёночное зерно + виньетка (поверх всего, не кликабельны) -->
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <!-- ЗАГРУЗОЧНЫЙ ЭКРАН (театральный занавес) -->
+  <div class="boot" id="boot">
+    <div class="boot__curtain boot__curtain--left"></div>
+    <div class="boot__curtain boot__curtain--right"></div>
+    <div class="boot__center">
+      <div class="boot__marquee" aria-hidden="true">
+        <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i><i style="--i:9"></i><i style="--i:10"></i>
+      </div>
+      <p class="boot__brand">Broadway <b>Guitardo</b></p>
+      <div class="boot__bar"><span></span></div>
+      <p class="boot__hint" id="bootHint">Поднимаем занавес…</p>
+    </div>
+  </div>
+
+  <!-- ШАПКА -->
+  <header class="header" id="header">
+    <div class="header__inner">
+      <a href="#hero" class="logo" id="logo">Broadway <b>Guitardo</b></a>
+      <nav class="nav" id="nav">
+        <a href="#about">О коллективе</a>
+        <a href="#afisha">Афиша</a>
+        <a href="#feature" class="nav__current">Бал Вампиров</a>
+        <a href="#gallery">Галерея</a>
+        <a href="#invite">Присоединиться</a>
+        <a href="#afisha" class="btn btn-primary">Билеты</a>
+      </nav>
+      <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <!-- Контент рендерится из /api/content -->
+  <main id="app"></main>
+
+  <!-- ФУТЕР -->
+  <footer class="footer" id="footer"></footer>
+
+  <!-- МОДАЛКА ТРЕЙЛЕРА -->
+  <div class="modal" id="trailerModal">
+    <div class="modal__inner">
+      <button class="modal__close" data-close-trailer aria-label="Закрыть">&times;</button>
+      <div id="trailerBody"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА СПЕКТАКЛЯ -->
+  <div class="modal modal--project" id="projectModal">
+    <div class="modal__panel">
+      <button class="modal__close" data-close-project aria-label="Закрыть">&times;</button>
+      <div id="projectBody"></div>
+    </div>
+  </div>
+
+  <!-- МОБИЛЬНЫЙ ЛИПКИЙ БАР ДЕЙСТВИЙ (рендерится из JS) -->
+  <div class="mbar" id="mbar" aria-hidden="true"></div>
+
+  <script src="/red_draft3_1_1/script.js?v=20260659"></script>
+</body>
+</html>
