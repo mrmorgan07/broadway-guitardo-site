@@ -1451,8 +1451,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   height: 9px;
   border-radius: 50%;
   background: rgba(243, 236, 226, 0.14);
-  animation: bulbOn 0.6s var(--ease) forwards;
-  animation-delay: calc(var(--i) * 0.16s);
+  animation: bulbOn 0.5s var(--ease) forwards;
+  animation-delay: calc(var(--i) * 0.1s);
 }
 @keyframes bulbOn {
   0%   { background: rgba(243, 236, 226, 0.14); box-shadow: none; }
@@ -1484,14 +1484,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 .boot.done .boot__curtain--right { transform: translateX(101%); }
 .boot.done .boot__center { opacity: 0; transform: translateY(-24px); }
 
-@media (prefers-reduced-motion: reduce) {
-  .boot__curtain, .boot__center, .boot__bar span { transition: none; animation: none; }
-  .boot__marquee i {
-    animation: none;
-    background: var(--cream);
-    box-shadow: 0 0 6px rgba(var(--red-rgb), 0.5);
-  }
-}
+/* Увертюра-занавес (шторы, лампочки-маркиза) форсируется и при Reduce Motion —
+   по решению клиента полная заставка должна играть на всех устройствах. */
 
 /* ==========================================================================
    REVEAL
