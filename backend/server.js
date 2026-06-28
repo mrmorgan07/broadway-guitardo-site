@@ -37,6 +37,7 @@ const RED_DRAFT_DIR = path.join(ROOT, "red_draft");
 const RED_DRAFT2_DIR = path.join(ROOT, "red_draft2");
 const RED_DRAFT3_DIR = path.join(ROOT, "red_draft3");
 const RED_DRAFT3_1_DIR = path.join(ROOT, "red_draft3_1");
+const RED_DRAFT3_1_1_DIR = path.join(ROOT, "red_draft3_1_1");
 
 // Допустимые MIME для изображений и видео
 const IMAGE_MIMES = /^image\/(jpeg|png|gif|webp|avif)$/i;
@@ -259,6 +260,9 @@ app.use("/red_draft3", express.static(RED_DRAFT3_DIR));
 
 // red_draft3_1 — итерация по цветовой палитре (светлее красный, читаемость на мобиле)
 app.use("/red_draft3_1", express.static(RED_DRAFT3_1_DIR));
+
+// red_draft3_1_1 — итерация по моушн/экшн-эффектам (поверх палитры 3_1)
+app.use("/red_draft3_1_1", express.static(RED_DRAFT3_1_1_DIR));
 
 // Vue-сборка (лендинг)
 if (fs.existsSync(CLIENT_DIST)) {
@@ -593,6 +597,10 @@ app.get("/red_draft3", (_req, res) => {
 
 app.get("/red_draft3_1", (_req, res) => {
   res.sendFile(path.join(RED_DRAFT3_1_DIR, "index.html"));
+});
+
+app.get("/red_draft3_1_1", (_req, res) => {
+  res.sendFile(path.join(RED_DRAFT3_1_1_DIR, "index.html"));
 });
 
 app.get("/", (_req, res) => {
