@@ -1041,7 +1041,7 @@ async function boot() {
   // под reduced-motion CSS гасит лампочки/анимацию штор, но занавес всё равно показывается.
   // Клик по занавесу — пропустить.
   const seen = sessionStorage.getItem("seenBoot");
-  const minShow = seen ? 1400 : 3200;
+  const minShow = seen ? 700 : 1500;
   sessionStorage.setItem("seenBoot", "1");
 
   let curtainUp = false;
