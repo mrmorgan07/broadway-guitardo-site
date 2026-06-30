@@ -257,7 +257,7 @@ function openProjectEdit(id) {
   editingProjectId = id;
   const p = id ? db.projects.find((x) => x.id === id) : {
     id: "", title: "", date: "", tag: "", description: "", poster: "", gallery: [], soloists: [], ticketLink: "",
-    duration: "", priceFrom: "", priceTo: ""
+    duration: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false
   };
   showView("projectEdit");
 
@@ -292,6 +292,18 @@ function openProjectEdit(id) {
           <div class="col-md-4">
             <label class="form-label">Стоимость до (₽)</label>
             <input class="form-control" name="priceTo" type="number" min="0" step="1" value="${esc(p.priceTo ?? "")}" placeholder="4000">
+          </div>
+          <div class="col-md-6">
+            <div class="form-check form-switch mt-md-4">
+              <input class="form-check-input" type="checkbox" role="switch" name="freeAdmission" id="freeAdmission" ${p.freeAdmission ? "checked" : ""}>
+              <label class="form-check-label" for="freeAdmission">Вход свободный <span class="text-secondary">(вместо стоимости)</span></label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check form-switch mt-md-4">
+              <input class="form-check-input" type="checkbox" role="switch" name="soldOut" id="soldOut" ${p.soldOut ? "checked" : ""}>
+              <label class="form-check-label" for="soldOut">Билетов больше нет</label>
+            </div>
           </div>
           <div class="col-12">
             <label class="form-label">Описание *</label>
@@ -494,7 +506,9 @@ async function saveProject(gallery) {
     ticketLink: f.ticketLink.value.trim(),
     duration: f.duration.value.trim(),
     priceFrom: f.priceFrom.value.trim(),
-    priceTo: f.priceTo.value.trim()
+    priceTo: f.priceTo.value.trim(),
+    freeAdmission: f.freeAdmission.checked,
+    soldOut: f.soldOut.checked
   };
 
   if (!body.title || !body.description) return toast("Заполните обязательные поля", "error");
