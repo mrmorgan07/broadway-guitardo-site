@@ -847,6 +847,49 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 .poster .btn-dark { background: var(--cta); color: #fff; }
 .poster .btn-dark:hover { background: var(--cta-bright); }
 
+/* Статус-плашки спектакля — правый верх постера (дата слева, статусы справа) */
+.poster__badges {
+  position: absolute;
+  top: 14px; right: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  z-index: 1;
+}
+.poster__badge {
+  font-family: var(--font-label);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 7px 13px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.poster__badge--free {
+  background: var(--cream);
+  color: #1a1413;
+}
+.poster__badge--sold {
+  background: rgba(10, 8, 9, 0.72);
+  color: var(--cream);
+  border: 1px solid rgba(243, 236, 226, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* «Билетов нет» — нерабочая кнопка-заглушка в стиле сайта */
+.btn.is-sold,
+.mbar__btn.is-sold {
+  background: rgba(243, 236, 226, 0.06);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+  transform: none;
+}
+
 /* Огромный заголовок АФИША */
 .afisha-title {
   font-size: clamp(2.6rem, 5.5vw, 5rem);

@@ -35,9 +35,20 @@ function formatPrice(from, to) {
 
 function projectDetailMeta(p = {}) {
   const price = formatPrice(p.priceFrom, p.priceTo);
+  const priceRow = p.freeAdmission
+    ? `<dt>Стоимость</dt><dd>Вход свободный</dd>`
+    : (price ? `<dt>Стоимость</dt><dd>${esc(price)}</dd>` : "");
   return `
     ${p.duration ? `<dt>Длительность</dt><dd>${esc(p.duration)}</dd>` : ""}
-    ${price ? `<dt>Стоимость</dt><dd>${esc(price)}</dd>` : ""}`;
+    ${priceRow}`;
+}
+
+// Статус-плашки спектакля (вход свободный / билетов нет) — правый верх постера
+function projectBadges(p = {}) {
+  const items = [];
+  if (p.freeAdmission) items.push(`<span class="poster__badge poster__badge--free">Вход свободный</span>`);
+  if (p.soldOut) items.push(`<span class="poster__badge poster__badge--sold">Билетов нет</span>`);
+  return items.length ? `<div class="poster__badges">${items.join("")}</div>` : "";
 }
 
 function videoType(url) {
@@ -425,14 +436,17 @@ function renderAfisha(projects = []) {
       <div class="poster__media">
         <img src="${esc(imgUrl(p.poster))}" alt="${esc(p.title)}" loading="lazy">
         ${p.date ? `<span class="poster__date">${esc(p.date)}</span>` : ""}
+        ${projectBadges(p)}
       </div>
       <h3 class="poster__title">${esc(p.title)}</h3>
       ${tag ? `<p class="poster__tag">${esc(tag)}</p>` : ""}
       <div class="poster__actions">
         <button class="btn btn-secondary" data-project="${esc(p.id)}">О спектакле</button>
-        ${p.ticketLink
-          ? `<a class="btn btn-dark" href="${esc(p.ticketLink)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
-          : `<button class="btn btn-dark" data-project="${esc(p.id)}">Билеты</button>`}
+        ${p.soldOut
+          ? `<span class="btn btn-dark is-sold" aria-disabled="true">Билетов нет</span>`
+          : p.ticketLink
+            ? `<a class="btn btn-dark" href="${esc(p.ticketLink)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
+            : `<button class="btn btn-dark" data-project="${esc(p.id)}">Билеты</button>`}
       </div>
     </article>`;
   }).join("");
@@ -807,7 +821,9 @@ function openProject(id) {
         </dl>
         <div class="pd__desc">
           <p>${esc(p.description)}</p>
-          ${p.ticketLink ? `<a href="${esc(p.ticketLink)}" class="btn btn-primary" target="_blank" rel="noopener">Билеты</a>` : ""}
+          ${p.soldOut
+            ? `<span class="btn btn-primary is-sold" aria-disabled="true">Билетов нет</span>`
+            : p.ticketLink ? `<a href="${esc(p.ticketLink)}" class="btn btn-primary" target="_blank" rel="noopener">Билеты</a>` : ""}
         </div>
       </div>
 
@@ -880,9 +896,11 @@ function initMbar() {
   const ticket = featured?.ticketLink;
   const choir = DB.choirInvite?.link;
 
-  const ticketBtn = ticket
-    ? `<a class="mbar__btn mbar__btn--primary" href="${esc(ticket)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
-    : `<a class="mbar__btn mbar__btn--primary" href="#afisha">Билеты</a>`;
+  const ticketBtn = featured?.soldOut
+    ? `<span class="mbar__btn mbar__btn--primary is-sold" aria-disabled="true">Билетов нет</span>`
+    : ticket
+      ? `<a class="mbar__btn mbar__btn--primary" href="${esc(ticket)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
+      : `<a class="mbar__btn mbar__btn--primary" href="#afisha">Билеты</a>`;
   const choirBtn = choir
     ? `<a class="mbar__btn mbar__btn--ghost" href="${esc(choir)}" target="_blank" rel="noopener" data-stop>В хор</a>`
     : `<a class="mbar__btn mbar__btn--ghost" href="#invite">В хор</a>`;

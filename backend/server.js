@@ -310,7 +310,9 @@ app.post("/api/projects", requireAuth, requireCsrf, (req, res) => {
     ticketLink: body.ticketLink || "",
     duration: body.duration || "",
     priceFrom: body.priceFrom ?? "",
-    priceTo: body.priceTo ?? ""
+    priceTo: body.priceTo ?? "",
+    freeAdmission: !!body.freeAdmission,
+    soldOut: !!body.soldOut
   };
 
   db.projects.push(project);
