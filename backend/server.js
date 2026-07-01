@@ -57,35 +57,81 @@ const sessions = new Map();
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
-/* --- Утилиты БД --- */
+/* --- Хранилище (libSQL / Turso) --- */
+// Данные лежат в таблице kv двумя документами: "content" (сайт) и "auth".
+// В dev — локальный файл backend/data/site.db; в проде — Turso (переживает редеплой
+// на Render, где файловая система эфемерна). Контент кэшируется в памяти:
+// чтения синхронные из кэша, записи — сквозные (persist → обновление кэша).
 
+const { createClient } = require("@libsql/client");
+
+const dbClient = createClient({
+  url: process.env.TURSO_DATABASE_URL || `file:${path.join(DATA_DIR, "site.db")}`,
+  authToken: process.env.TURSO_AUTH_TOKEN
+});
+
+let contentCache = null;
+let authCache = null;
+
+async function kvGet(key) {
+  const r = await dbClient.execute({ sql: "SELECT value FROM kv WHERE key = ?", args: [key] });
+  return r.rows.length ? JSON.parse(r.rows[0].value) : null;
+}
+
+async function kvSet(key, obj) {
+  await dbClient.execute({
+    sql: "INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    args: [key, JSON.stringify(obj)]
+  });
+}
+
+// Инициализация: создаём таблицу и при первом запуске переносим данные из JSON-файлов.
+async function initStore() {
+  // Локальный файл (вариант A): WAL + таймауты ради надёжности и конкурентных чтений.
+  // Для Turso (remote) PRAGMA не нужны.
+  if (!process.env.TURSO_DATABASE_URL) {
+    await dbClient.execute("PRAGMA journal_mode = WAL");
+    await dbClient.execute("PRAGMA synchronous = NORMAL");
+    await dbClient.execute("PRAGMA busy_timeout = 5000");
+  }
+
+  await dbClient.execute("CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
+
+  contentCache = await kvGet("content");
+  if (contentCache == null) {
+    contentCache = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, "utf8")) : {};
+    await kvSet("content", contentCache);
+    console.log("🗄  content: перенесён в БД из db.json");
+  }
+
+  authCache = await kvGet("auth");
+  if (authCache == null) {
+    authCache = fs.existsSync(AUTH_FILE)
+      ? JSON.parse(fs.readFileSync(AUTH_FILE, "utf8"))
+      : { login: "admin", passwordHash: bcrypt.hashSync("12345", 10) };
+    await kvSet("auth", authCache);
+    console.log("🗄  auth: инициализирован в БД");
+  }
+}
+
+// Чтения — синхронно из кэша (возвращаем копию, чтобы мутации в хендлерах
+// не трогали кэш до успешной записи).
 function readDb() {
-  return JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
+  return structuredClone(contentCache);
 }
 
-// Атомарная запись: пишем во временный файл и переименовываем (rename атомарен на одной ФС).
-// Защищает от повреждённого/частично записанного JSON при сбое или гонке записей.
-function writeFileAtomic(file, content) {
-  const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, content, "utf8");
-  fs.renameSync(tmp, file);
-}
-
-function writeDb(data) {
-  writeFileAtomic(DB_FILE, JSON.stringify(data, null, 2));
+async function writeDb(data) {
+  await kvSet("content", data);
+  contentCache = data;
 }
 
 function readAuth() {
-  if (!fs.existsSync(AUTH_FILE)) {
-    const initial = { login: "admin", passwordHash: bcrypt.hashSync("12345", 10) };
-    fs.writeFileSync(AUTH_FILE, JSON.stringify(initial, null, 2));
-    return initial;
-  }
-  return JSON.parse(fs.readFileSync(AUTH_FILE, "utf8"));
+  return structuredClone(authCache);
 }
 
-function writeAuth(data) {
-  writeFileAtomic(AUTH_FILE, JSON.stringify(data, null, 2));
+async function writeAuth(data) {
+  await kvSet("auth", data);
+  authCache = data;
 }
 
 function slugify(text) {
@@ -287,7 +333,7 @@ app.get("/api/projects/:id", (req, res) => {
   res.json(project);
 });
 
-app.post("/api/projects", requireAuth, requireCsrf, (req, res) => {
+app.post("/api/projects", requireAuth, requireCsrf, async (req, res) => {
   const db = readDb();
   const body = req.body || {};
   if (!body.title?.trim()) return res.status(400).json({ error: "Название обязательно" });
@@ -316,11 +362,11 @@ app.post("/api/projects", requireAuth, requireCsrf, (req, res) => {
   };
 
   db.projects.push(project);
-  writeDb(db);
+  try { await writeDb(db); } catch { return res.status(500).json({ error: "Ошибка сохранения" }); }
   res.status(201).json(project);
 });
 
-app.put("/api/projects/:id", requireAuth, requireCsrf, (req, res) => {
+app.put("/api/projects/:id", requireAuth, requireCsrf, async (req, res) => {
   const db = readDb();
   const idx = db.projects.findIndex((p) => p.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Спектакль не найден" });
@@ -334,16 +380,16 @@ app.put("/api/projects/:id", requireAuth, requireCsrf, (req, res) => {
   }
 
   db.projects[idx] = { ...db.projects[idx], ...body, id: req.params.id };
-  writeDb(db);
+  try { await writeDb(db); } catch { return res.status(500).json({ error: "Ошибка сохранения" }); }
   res.json(db.projects[idx]);
 });
 
-app.delete("/api/projects/:id", requireAuth, requireCsrf, (req, res) => {
+app.delete("/api/projects/:id", requireAuth, requireCsrf, async (req, res) => {
   const db = readDb();
   const before = db.projects.length;
   db.projects = db.projects.filter((p) => p.id !== req.params.id);
   if (db.projects.length === before) return res.status(404).json({ error: "Спектакль не найден" });
-  writeDb(db);
+  try { await writeDb(db); } catch { return res.status(500).json({ error: "Ошибка сохранения" }); }
   res.json({ ok: true });
 });
 
@@ -365,7 +411,7 @@ function sectionRoutes(sectionKey) {
     res.json(map[sectionKey] ?? {});
   });
 
-  app.put(`/api/${sectionKey}`, requireAuth, requireCsrf, (req, res) => {
+  app.put(`/api/${sectionKey}`, requireAuth, requireCsrf, async (req, res) => {
     const db = readDb();
     const keyMap = {
       about: "about",
@@ -379,7 +425,7 @@ function sectionRoutes(sectionKey) {
     };
     const dbKey = keyMap[sectionKey];
     db[dbKey] = { ...db[dbKey], ...req.body };
-    writeDb(db);
+    try { await writeDb(db); } catch { return res.status(500).json({ error: "Ошибка сохранения" }); }
     res.json(db[dbKey]);
   });
 }
@@ -414,7 +460,7 @@ app.get("/api/auth/check", (req, res) => {
   res.json({ authenticated: !!session, login: session?.login || null, mustChangePassword });
 });
 
-app.put("/api/auth/password", requireAuth, requireCsrf, (req, res) => {
+app.put("/api/auth/password", requireAuth, requireCsrf, async (req, res) => {
   const { oldPassword, newPassword, confirm } = req.body || {};
   const auth = readAuth();
 
@@ -429,7 +475,7 @@ app.put("/api/auth/password", requireAuth, requireCsrf, (req, res) => {
   }
 
   auth.passwordHash = bcrypt.hashSync(newPassword, 10);
-  writeAuth(auth);
+  try { await writeAuth(auth); } catch { return res.status(500).json({ error: "Ошибка сохранения" }); }
   res.json({ ok: true, message: "Пароль изменён" });
 });
 
@@ -629,8 +675,17 @@ app.use((req, res) => {
 
 /* --- Запуск --- */
 
-app.listen(PORT, () => {
-  console.log(`\n🎭 Сайт:    http://localhost:${PORT}`);
-  console.log(`⚙️  Админка: http://localhost:${PORT}/admin`);
-  console.log(`🔑 Логин:   admin / 12345\n`);
-});
+initStore()
+  .then(() => {
+    app.listen(PORT, () => {
+      const target = process.env.TURSO_DATABASE_URL ? "Turso" : "локальный файл (site.db)";
+      console.log(`\n🎭 Сайт:    http://localhost:${PORT}`);
+      console.log(`⚙️  Админка: http://localhost:${PORT}/admin`);
+      console.log(`🗄  Данные:  ${target}`);
+      console.log(`🔑 Логин:   admin / 12345\n`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ Не удалось инициализировать БД:", err.message);
+    process.exit(1);
+  });

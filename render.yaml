@@ -20,6 +20,13 @@ services:
       # - key: ADMIN_PASSWORD
       #   value: YOUR_SECURE_PASSWORD_HERE
 
+      # База данных Turso (libSQL). Введите оба значения вручную в дашборде Render.
+      # Без них данные лягут в эфемерный файл и сбросятся при редеплое.
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+
     # Авто-деплой при пуше в ветку main/master
     autoDeploy: true
 

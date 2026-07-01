@@ -15,6 +15,12 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# Локальная БД libSQL (dev). В проде данные в Turso; db.json остаётся сидом.
+backend/data/site.db
+backend/data/site.db-journal
+backend/data/site.db-wal
+backend/data/site.db-shm
+
 # -----------------------------------------------------------------------
 # Загруженные файлы: текущие uploads ОСТАЮТСЯ в git,
 # чтобы на Render сразу работали картинки из db.json.

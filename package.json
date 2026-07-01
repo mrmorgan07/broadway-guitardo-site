@@ -12,8 +12,11 @@
     "dev": "echo Запустите: npm run dev:api и npm run dev:client в двух терминалах",
     "init-auth": "node scripts/init-auth.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
+    "@libsql/client": "^0.17.4",
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
