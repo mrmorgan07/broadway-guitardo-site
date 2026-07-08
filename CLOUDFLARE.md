@@ -104,6 +104,46 @@ R2, то на одной из платформ картинки не откро�
 - [ ] **Ф6. Сборка статики** — выходная папка Pages (Vue + макеты + admin).
 - [ ] **Ф7. Деплой** — `wrangler pages deploy`, секреты, проверка.
 
+## Перед деплоем (обязательно)
+
+1. **Инициализация Turso.** У CF-функций нет шага миграции — таблицу `kv` и
+   стартовый контент/логин создаёт Express. Один раз запустить его против Turso:
+   ```bash
+   TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... npm start
+   ```
+   `initStore()` создаст `kv` и зальёт `content`+`auth` из `db.json`/`auth.json`.
+   После этого CF читает ту же базу.
+2. **R2 public / домен.** Включить публичный доступ бакета или повесить домен
+   `media.<домен>` и прописать его в `R2_PUBLIC_BASE` (wrangler.toml `[vars]`).
+3. **R2 CORS** (для presigned-загрузки видео из браузера) — разрешить `PUT`
+   с origin Pages:
+   ```json
+   [{ "AllowedOrigins": ["https://<проект>.pages.dev"],
+      "AllowedMethods": ["PUT"], "AllowedHeaders": ["*"] }]
+   ```
+4. **Секреты Functions:**
+   ```bash
+   wrangler pages secret put TURSO_DATABASE_URL
+   wrangler pages secret put TURSO_AUTH_TOKEN
+   wrangler pages secret put JWT_SECRET
+   # для presign видео:
+   wrangler pages secret put R2_ACCOUNT_ID
+   wrangler pages secret put R2_ACCESS_KEY_ID
+   wrangler pages secret put R2_SECRET_ACCESS_KEY
+   wrangler pages secret put R2_BUCKET
+   ```
+
+## Как админка выбирает стратегию загрузки
+
+Добавлен `GET /api/capabilities`. Админка (`frontend/admin/js/admin.js`) один раз
+запрашивает его и по ответу решает:
+- **Cloudflare** (`clientResize:true`) — сжимает фото и делает превью в браузере
+  (canvas), шлёт `image`+`thumb`; видео грузит presigned-PUT прямо в R2.
+- **Express/Render** (`clientResize:false`) — ведёт себя как раньше: сервер сам
+  оптимизирует (sharp) и делает превью, видео грузится напрямую multipart.
+
+Так один и тот же файл админки работает на обеих платформах без риска для Render.
+
 ## Локальная разработка
 
 - Express (как сейчас): `npm start` → http://localhost:3000

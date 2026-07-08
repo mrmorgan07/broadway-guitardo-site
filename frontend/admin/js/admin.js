@@ -1043,32 +1043,72 @@ function renderPassword() {
 /* --- Медиатека --- */
 
 // onProgress(percent) — необязательный колбэк; если задан, грузим через XHR с реальным прогрессом
-function uploadFile(file, type = "image", onProgress = null) {
-  const field = type === "video" ? "video" : "image";
-  const endpoint = type === "video" ? "/api/upload/video" : "/api/upload";
-  const fd = new FormData();
-  fd.append(field, file);
+// Возможности бэкенда (кэшируем): Cloudflare требует ресайз на клиенте и
+// presigned-загрузку видео; Express (Render) делает всё на сервере.
+let _capsPromise = null;
+function getCaps() {
+  if (!_capsPromise) {
+    _capsPromise = fetch("/api/capabilities")
+      .then((r) => r.json())
+      .catch(() => ({ storage: "disk", clientResize: false, presignVideo: false }));
+  }
+  return _capsPromise;
+}
 
-  // Быстрый путь без прогресса (изображения) — через общий api()
-  if (!onProgress) {
-    return api(endpoint, {
-      method: "POST",
-      body: fd,
-      headers: {
-        "X-Auth-Token": sessionStorage.getItem(AUTH.token),
-        "X-CSRF-Token": sessionStorage.getItem(AUTH.csrf)
-      }
-    });
+// Ресайз/перекодирование изображения в браузере (canvas → JPEG).
+// maxDim — макс. сторона. Учитывает EXIF-ориентацию. Возвращает Blob.
+async function resizeImage(file, maxDim, quality) {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(1, Math.round(bitmap.width * scale));
+  const h = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+  bitmap.close?.();
+  const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", quality));
+  return blob || file;
+}
+
+async function uploadFile(file, type = "image", onProgress = null) {
+  const caps = await getCaps();
+  if (type === "video") {
+    return caps.presignVideo
+      ? uploadVideoPresign(file, onProgress)
+      : uploadVideoDirect(file, onProgress);
   }
 
-  // Путь с реальным прогрессом (видео) — XMLHttpRequest
+  // Изображение
+  const fd = new FormData();
+  if (caps.clientResize) {
+    // Cloudflare: sharp недоступен → готовим оригинал и превью на клиенте
+    if (/gif/i.test(file.type)) {
+      fd.append("image", file, file.name);           // gif не трогаем (анимация)
+    } else {
+      const optimized = await resizeImage(file, 2560, 0.82);
+      fd.append("image", optimized, file.name.replace(/\.[^.]+$/, ".jpg"));
+    }
+    const thumb = await resizeImage(file, 400, 0.8).catch(() => null);
+    if (thumb) fd.append("thumb", thumb, "thumb.jpg");
+  } else {
+    // Express: сервер сам оптимизирует и делает превью
+    fd.append("image", file);
+  }
+  // api() сам добавит X-Auth-Token/X-CSRF-Token (для FormData — без Content-Type)
+  return api("/api/upload", { method: "POST", body: fd });
+}
+
+// Прямая multipart-загрузка видео (Express) с прогрессом.
+function uploadVideoDirect(file, onProgress) {
+  const fd = new FormData();
+  fd.append("video", file);
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", endpoint);
+    xhr.open("POST", "/api/upload/video");
     xhr.setRequestHeader("X-Auth-Token", sessionStorage.getItem(AUTH.token) || "");
     xhr.setRequestHeader("X-CSRF-Token", sessionStorage.getItem(AUTH.csrf) || "");
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
     };
     xhr.onload = () => {
       let data = {};
@@ -1078,6 +1118,35 @@ function uploadFile(file, type = "image", onProgress = null) {
     };
     xhr.onerror = () => reject(new Error("Ошибка сети при загрузке"));
     xhr.send(fd);
+  });
+}
+
+// Cloudflare: получаем presigned URL, грузим файл напрямую в R2, регистрируем в индексе.
+async function uploadVideoPresign(file, onProgress) {
+  const meta = await api("/api/upload/video?presign=1", {
+    method: "POST",
+    body: JSON.stringify({
+      filename: file.name,
+      contentType: file.type || "video/mp4",
+      size: file.size
+    })
+  });
+  await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", meta.uploadUrl);
+    xhr.setRequestHeader("Content-Type", file.type || "video/mp4");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300)
+      ? resolve()
+      : reject(new Error("Ошибка загрузки в R2"));
+    xhr.onerror = () => reject(new Error("Ошибка сети при загрузке"));
+    xhr.send(file);
+  });
+  return api("/api/upload/video/complete", {
+    method: "POST",
+    body: JSON.stringify({ key: meta.key, url: meta.url, size: file.size })
   });
 }
 

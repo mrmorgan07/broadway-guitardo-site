@@ -49,6 +49,18 @@ const requireCsrf = async (c: any, next: any) => {
 
 /* ---------- Публичное API ---------- */
 
+// Возможности бэкенда — админка по ним выбирает стратегию загрузки.
+app.get("/capabilities", (c) =>
+  c.json({
+    storage: "r2",
+    clientResize: true,
+    presignVideo: !!(
+      c.env.R2_ACCOUNT_ID && c.env.R2_ACCESS_KEY_ID &&
+      c.env.R2_SECRET_ACCESS_KEY && c.env.R2_BUCKET
+    ),
+  })
+);
+
 app.get("/content", async (c) => c.json(await readContent(c.env)));
 
 app.get("/projects", async (c) => c.json((await readContent(c.env)).projects || []));
