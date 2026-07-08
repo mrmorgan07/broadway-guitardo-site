@@ -19,9 +19,10 @@
 
 ## 1. Turso: боевая база
 
-🧑 Создать базу и получить доступы:
+🧑 Создать базу и получить доступы (локации — по AWS-регионам; список:
+`~/.turso/turso db locations`; ближайший к ЕС — `aws-eu-west-1`, Ирландия):
 ```bash
-~/.turso/turso db create broadway --location fra   # fra = Франкфурт (ближе к РФ/ЕС)
+~/.turso/turso db create broadway --location aws-eu-west-1
 ~/.turso/turso db show broadway --url              # → libsql://broadway-<логин>.turso.io
 ~/.turso/turso db tokens create broadway           # → длинный токен
 ```
