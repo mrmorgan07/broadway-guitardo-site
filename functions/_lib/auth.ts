@@ -10,14 +10,14 @@ const TTL_SEC = 12 * 60 * 60; // 12 часов
 export async function createToken(env: any, login: string) {
   const csrf = crypto.randomUUID().replace(/-/g, "");
   const exp = Math.floor(Date.now() / 1000) + TTL_SEC;
-  const token = await sign({ login, csrf, exp }, env.JWT_SECRET);
+  const token = await sign({ login, csrf, exp }, env.JWT_SECRET, "HS256");
   return { token, csrfToken: csrf, login };
 }
 
 export async function getSession(env: any, token?: string) {
   if (!token) return null;
   try {
-    return await verify(token, env.JWT_SECRET); // бросает на невалидном/просроченном
+    return await verify(token, env.JWT_SECRET, "HS256"); // бросает на невалидном/просроченном
   } catch {
     return null;
   }

@@ -30,6 +30,12 @@ copyInto("red_draft3_1_1", ".");
 
 // Админка для управления контентом
 copyInto("frontend/admin", "admin");
+// Pages для /admin/ ищет index.html — admin.html лежит под этим именем
+const adminHtml = join(DIST, "admin", "admin.html");
+if (existsSync(adminHtml)) {
+  cpSync(adminHtml, join(DIST, "admin", "index.html"));
+  console.log("✓ dist/admin/index.html (из admin.html)");
+}
 
 // _routes.json — Functions только на /api/*, всё прочее раздаётся как статика
 writeFileSync(
