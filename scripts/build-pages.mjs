@@ -3,7 +3,7 @@
 // API берётся из ./functions автоматически.
 // Запуск: node scripts/build-pages.mjs (обычно через npm run pages:build)
 
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,6 +27,14 @@ function copyInto(srcRel, destRel) {
 
 // Основной сайт — макет red_draft3_1_1 в корень
 copyInto("red_draft3_1_1", ".");
+// В корне ассеты лежат в корне, а исходный index.html ссылается на них по
+// абсолютному пути /red_draft3_1_1/... — правим префикс на / (только в копии).
+const rootIndex = join(DIST, "index.html");
+if (existsSync(rootIndex)) {
+  const html = readFileSync(rootIndex, "utf8").replaceAll("/red_draft3_1_1/", "/");
+  writeFileSync(rootIndex, html);
+  console.log("✓ dist/index.html: пути ассетов → корень");
+}
 
 // Админка для управления контентом
 copyInto("frontend/admin", "admin");
