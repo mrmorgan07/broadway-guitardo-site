@@ -805,21 +805,55 @@ function renderLocation() {
 
 /* --- Галерея (статичные фото перед каруселью) --- */
 
-function renderGallery() {
+async function renderGallery() {
   const photos = [...((db.gallery && db.gallery.staticPhotos) || [])];
   while (photos.length < 3) photos.push("");
 
   const imgSrc = (u) => !u ? "" : (u.startsWith("/") || u.startsWith("http")) ? u : "/uploads/" + u;
 
+  // Фото ленты галереи = изображения с категорией "gallery" (папка gallery/ в R2)
+  let galleryItems = [];
+  async function loadGallery() {
+    try {
+      const m = await api("/api/media");
+      galleryItems = (m.images || []).filter((i) => i.category === "gallery");
+    } catch { galleryItems = []; }
+  }
+  await loadGallery();
+
   function draw() {
     document.getElementById("viewGallery").innerHTML = `
-      <h2 class="mb-2" style="font-family:var(--font-heading)">Галерея — статичные фото</h2>
-      <p class="text-muted small mb-4">Три фото в мозаике перед каруселью галереи. Если слот пустой — подставится фото из проектов автоматически.</p>
+      <h2 class="mb-3" style="font-family:var(--font-heading)">Галерея</h2>
+
+      <div class="card bg-dark border-secondary mb-4"><div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+          <div>
+            <h5 class="mb-0">Фото ленты галереи</h5>
+            <div class="text-muted small">Показываются в горизонтальной ленте на сайте (папка gallery/).</div>
+          </div>
+          <label class="btn btn-gold btn-sm mb-0">
+            📷 Добавить фото
+            <input type="file" accept="image/*" multiple id="galleryUpload" class="d-none">
+          </label>
+        </div>
+        <div id="galleryUploadProgress" class="d-none mb-3"><div class="progress" style="height:6px"><div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width:100%"></div></div></div>
+        ${galleryItems.length
+          ? `<div class="row g-2">${galleryItems.map((it) => `
+              <div class="col-6 col-md-3">
+                <div class="border border-secondary rounded p-1 position-relative">
+                  <img src="${it.thumb || it.url}" alt="" style="width:100%;height:110px;object-fit:cover;border-radius:4px">
+                  <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 py-0 px-2" data-del-gal="${esc(it.filename)}">✕</button>
+                </div>
+              </div>`).join("")}</div>`
+          : `<div class="text-muted">Пока нет фото. Нажмите «Добавить фото».</div>`}
+      </div></div>
+
+      <p class="text-muted small mb-2">Три витринных фото в мозаике перед лентой. Если слот пустой — подставится фото из ленты автоматически.</p>
       <form id="galleryForm" class="card bg-dark border-secondary"><div class="card-body">
         <div class="row g-4">
           ${[0, 1, 2].map((i) => `
             <div class="col-md-4">
-              <label class="form-label">Фото ${i + 1}</label>
+              <label class="form-label">Витрина ${i + 1}</label>
               <div class="border border-secondary rounded p-2 text-center">
                 ${photos[i]
                   ? `<img src="${imgSrc(photos[i])}" alt="" style="width:100%;height:160px;object-fit:cover;border-radius:6px">`
@@ -829,9 +863,36 @@ function renderGallery() {
               </div>
             </div>`).join("")}
         </div>
-        <button type="submit" class="btn btn-gold mt-4">Сохранить</button>
+        <button type="submit" class="btn btn-gold mt-4">Сохранить витрину</button>
       </div></form>`;
 
+    // Мультизагрузка в ленту галереи (папка gallery)
+    document.getElementById("galleryUpload").onchange = async (e) => {
+      const files = [...e.target.files];
+      if (!files.length) return;
+      const prog = document.getElementById("galleryUploadProgress");
+      prog.classList.remove("d-none");
+      try {
+        for (const f of files) await uploadFile(f, "image", null, "gallery");
+        toast(`Загружено: ${files.length}`);
+        await loadGallery();
+        draw();
+      } catch (err) { toast(err.message, "error"); }
+      finally { prog.classList.add("d-none"); }
+    };
+
+    // Удаление фото из ленты
+    document.querySelectorAll("#viewGallery [data-del-gal]").forEach((b) => {
+      b.onclick = async () => {
+        try {
+          await api(`/api/media/image/${encodeURIComponent(b.dataset.delGal)}?force=1`, { method: "DELETE" });
+          await loadGallery();
+          draw();
+        } catch (err) { toast(err.message, "error"); }
+      };
+    });
+
+    // Витринные слоты (грузятся как обычные фото, не в ленту)
     document.querySelectorAll("#viewGallery [data-slot]").forEach((inp) => {
       inp.onchange = async (e) => {
         const f = e.target.files[0];
@@ -856,7 +917,7 @@ function renderGallery() {
           body: JSON.stringify({ staticPhotos: photos.slice(0, 3) })
         });
         db = await api("/api/content");
-        toast("Галерея сохранена");
+        toast("Витрина сохранена");
       } catch (err) { toast(err.message, "error"); }
     };
   }
@@ -1070,7 +1131,7 @@ async function resizeImage(file, maxDim, quality) {
   return blob || file;
 }
 
-async function uploadFile(file, type = "image", onProgress = null) {
+async function uploadFile(file, type = "image", onProgress = null, folder = null) {
   const caps = await getCaps();
   if (type === "video") {
     return caps.presignVideo
@@ -1080,6 +1141,7 @@ async function uploadFile(file, type = "image", onProgress = null) {
 
   // Изображение
   const fd = new FormData();
+  if (folder) fd.append("folder", folder);
   if (caps.clientResize) {
     // Cloudflare: sharp недоступен → готовим оригинал и превью на клиенте
     if (/gif/i.test(file.type)) {

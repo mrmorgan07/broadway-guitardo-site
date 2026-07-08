@@ -207,19 +207,22 @@ app.post("/upload", requireAuth, requireCsrf, async (c) => {
   if (!(file instanceof File)) return c.json({ error: "Файл не получен" }, 400);
   if (!IMAGE_RE.test(file.name)) return c.json({ error: "Допустимы только изображения" }, 400);
 
+  // Необязательная папка/категория (напр. "gallery") — префикс ключа в R2.
+  const folder = String(form.get("folder") || "").replace(/[^a-z0-9_-]/gi, "");
   const name = genName(file.name, ".jpg");
-  const url = await r2Put(c.env, name, await file.arrayBuffer(), file.type || "image/jpeg");
+  const key = folder ? `${folder}/${name}` : name;
+  const url = await r2Put(c.env, key, await file.arrayBuffer(), file.type || "image/jpeg");
 
   let thumbUrl: string | null = null;
   const thumb = form.get("thumb");
   if (thumb instanceof File) {
     const base = name.replace(/\.[^.]+$/, "");
-    const thumbKey = `thumb_${base}.jpg`;
+    const thumbKey = folder ? `${folder}/thumb_${base}.jpg` : `thumb_${base}.jpg`;
     thumbUrl = await r2Put(c.env, thumbKey, await thumb.arrayBuffer(), "image/jpeg");
   }
 
   const item = {
-    filename: name, url, thumb: thumbUrl, type: "image",
+    filename: name, url, thumb: thumbUrl, type: "image", category: folder || null,
     bytes: file.size, size: fmtSize(file.size), modified: new Date().toISOString(),
   };
   await addMedia(c.env, item);
@@ -269,8 +272,9 @@ app.post("/upload/video/complete", requireAuth, requireCsrf, async (c) => {
 /* ---------- Медиатека ---------- */
 
 app.get("/gallery/photos", async (c) => {
+  // Только курируемые фото галереи (категория "gallery"), не постеры/портреты.
   const photos = (await readMedia(c.env))
-    .filter((m) => m.type === "image")
+    .filter((m) => m.type === "image" && m.category === "gallery")
     .map((m) => m.url);
   return c.json({ photos });
 });
