@@ -1322,7 +1322,7 @@ async function renderMedia() {
     for (const file of files) {
       label.textContent = `Загружаю ${file.name}…`;
       try {
-        await uploadFile(file, "image");
+        await uploadFile(file, "image", null, "gallery");
         ok++;
       } catch (err) {
         fail++;
