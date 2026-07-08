@@ -1,0 +1,22 @@
+# Конфиг Cloudflare Pages (+ Pages Functions).
+# Статику Pages берёт из ./dist (её собирает scripts/build-pages.mjs).
+# API — из ./functions (Hono). Локальный запуск: npm run pages:dev
+
+name = "broadway"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# R2-бакет для фото/видео (нативный binding для Functions).
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "broadway-media"
+
+# Несекретные переменные. Секреты задаются отдельно:
+#   wrangler pages secret put TURSO_DATABASE_URL
+#   wrangler pages secret put TURSO_AUTH_TOKEN
+#   wrangler pages secret put JWT_SECRET
+#   (для presigned-загрузки видео) R2_ACCOUNT_ID / R2_ACCESS_KEY_ID /
+#   R2_SECRET_ACCESS_KEY / R2_BUCKET
+[vars]
+R2_PUBLIC_BASE = "https://REPLACE-with-your-r2-public-domain"

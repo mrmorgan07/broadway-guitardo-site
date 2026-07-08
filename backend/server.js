@@ -321,6 +321,13 @@ app.get("/api/content", (_req, res) => {
   res.json(readDb());
 });
 
+// Возможности бэкенда — админка по ним выбирает стратегию загрузки.
+// Express (Render) обрабатывает изображения на сервере (sharp) → ресайз на
+// клиенте не нужен, видео грузится напрямую.
+app.get("/api/capabilities", (_req, res) => {
+  res.json({ storage: "disk", clientResize: false, presignVideo: false });
+});
+
 /* --- Projects --- */
 
 app.get("/api/projects", (_req, res) => {
