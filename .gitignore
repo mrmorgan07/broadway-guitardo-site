@@ -5,6 +5,10 @@ client/node_modules/
 # Environment (никогда не коммитьте .env с реальными паролями)
 .env
 
+# Cloudflare Pages build output и wrangler-кэш
+dist/
+.wrangler/
+
 # OS / IDE
 .DS_Store
 Thumbs.db
