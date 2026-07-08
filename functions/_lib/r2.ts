@@ -39,8 +39,10 @@ export async function presignPut(env: any, key: string, contentType: string, exp
     service: "s3",
     region: "auto",
   });
+  // Кодируем сегменты, но сохраняем "/" (иначе ключ с папкой сломается)
+  const encodedKey = key.split("/").map(encodeURIComponent).join("/");
   const endpoint =
-    `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${env.R2_BUCKET}/${encodeURIComponent(key)}`;
+    `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${env.R2_BUCKET}/${encodedKey}`;
   const url = new URL(endpoint);
   url.searchParams.set("X-Amz-Expires", String(expiresSec));
   const signed = await client.sign(

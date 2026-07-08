@@ -239,7 +239,7 @@ app.post("/upload/video", requireAuth, requireCsrf, async (c) => {
   if (c.req.query("presign") === "1") {
     const { filename, contentType, size } = await c.req.json().catch(() => ({}));
     if (!filename || !VIDEO_RE.test(filename)) return c.json({ error: "Некорректное имя видео" }, 400);
-    const key = genName(filename, ".mp4");
+    const key = `videos/${genName(filename, ".mp4")}`;
     const uploadUrl = await presignPut(c.env, key, contentType || "video/mp4");
     return c.json({ uploadUrl, key, url: publicUrl(c.env, key), size: fmtSize(size || 0) });
   }
@@ -250,9 +250,10 @@ app.post("/upload/video", requireAuth, requireCsrf, async (c) => {
   if (!VIDEO_RE.test(file.name)) return c.json({ error: "Допустимы только видеофайлы" }, 400);
 
   const name = genName(file.name, ".mp4");
-  const url = await r2Put(c.env, name, file.stream(), file.type || "video/mp4");
+  const key = `videos/${name}`;
+  const url = await r2Put(c.env, key, file.stream(), file.type || "video/mp4");
   await addMedia(c.env, {
-    filename: name, url, thumb: null, type: "video",
+    filename: name, url, thumb: null, type: "video", category: "videos",
     bytes: file.size, size: fmtSize(file.size), modified: new Date().toISOString(),
   });
   return c.json({ url, filename: name, size: fmtSize(file.size) });
@@ -263,7 +264,7 @@ app.post("/upload/video/complete", requireAuth, requireCsrf, async (c) => {
   const { key, url, size } = await c.req.json().catch(() => ({}));
   if (!key || !url) return c.json({ error: "Нет данных о загрузке" }, 400);
   await addMedia(c.env, {
-    filename: key, url, thumb: null, type: "video",
+    filename: key.split("/").pop() || key, url, thumb: null, type: "video", category: "videos",
     bytes: size || 0, size: fmtSize(size || 0), modified: new Date().toISOString(),
   });
   return c.json({ ok: true, url });

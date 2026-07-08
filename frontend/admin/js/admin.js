@@ -1131,7 +1131,7 @@ async function resizeImage(file, maxDim, quality) {
   return blob || file;
 }
 
-async function uploadFile(file, type = "image", onProgress = null, folder = null) {
+async function uploadFile(file, type = "image", onProgress = null, folder = "photos") {
   const caps = await getCaps();
   if (type === "video") {
     return caps.presignVideo
