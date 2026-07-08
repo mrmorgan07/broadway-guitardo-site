@@ -36,6 +36,10 @@ if (existsSync(rootIndex)) {
   console.log("✓ dist/index.html: пути ассетов → корень");
 }
 
+// Шрифты макета лежат в соседней red_draft/fonts, а style.css ссылается на них
+// по абсолютному пути /red_draft/fonts/... — переносим, чтобы путь резолвился.
+copyInto("red_draft/fonts", "red_draft/fonts");
+
 // Админка для управления контентом
 copyInto("frontend/admin", "admin");
 // Pages для /admin/ ищет index.html — admin.html лежит под этим именем
