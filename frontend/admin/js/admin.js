@@ -620,27 +620,32 @@ function renderAboutGallery(photos, captions) {
 /* --- Director / Concertmaster --- */
 
 function personForm(section, data, apiPath) {
-  document.getElementById(`view${section}`).innerHTML = `
+  const root = document.getElementById(`view${section}`);
+  root.innerHTML = `
     <h2 class="mb-4" style="font-family:var(--font-heading)">${section === "Director" ? "Худрук" : "Концертмейстер"}</h2>
-    <form id="personForm" class="card bg-dark border-secondary"><div class="card-body row g-3">
+    <form class="personForm card bg-dark border-secondary"><div class="card-body row g-3">
       <div class="col-md-6"><label class="form-label">Имя</label><input class="form-control" name="name" value="${esc(data.name)}"></div>
       <div class="col-md-6"><label class="form-label">Фото URL</label>
-        <div class="input-group"><input class="form-control" name="photo" id="photoUrl" value="${esc(data.photo)}">
-        <input type="file" id="photoFile" accept="image/*" class="form-control"><button type="button" class="btn btn-outline-secondary" id="uploadPhoto">↑</button></div></div>
+        <div class="input-group"><input class="form-control photoUrl" name="photo" value="${esc(data.photo)}">
+        <input type="file" accept="image/*" class="form-control photoFile"><button type="button" class="btn btn-outline-secondary uploadPhoto">↑</button></div></div>
       <div class="col-12"><label class="form-label">Биография</label><textarea class="form-control" name="bio" rows="4">${esc(data.bio)}</textarea></div>
       <div class="col-12"><label class="form-label">Достижения</label><textarea class="form-control" name="achievements" rows="2">${esc(data.achievements)}</textarea></div>
       <div class="col-12"><button type="submit" class="btn btn-gold">Сохранить</button></div>
     </div></form>`;
 
-  document.getElementById("uploadPhoto").onclick = async () => {
-    const f = document.getElementById("photoFile").files[0];
+  // Ищем элементы внутри контейнера секции: id у Худрука и Концертмейстера
+  // совпадали бы, поэтому используем классы и scoped-запросы.
+  root.querySelector(".uploadPhoto").onclick = async () => {
+    const f = root.querySelector(".photoFile").files[0];
     if (!f) return;
-    const r = await uploadFile(f);
-    document.getElementById("photoUrl").value = r.url;
-    toast("Фото загружено");
+    try {
+      const r = await uploadFile(f);
+      root.querySelector(".photoUrl").value = r.url;
+      toast("Фото загружено");
+    } catch (err) { toast(err.message, "error"); }
   };
 
-  document.getElementById("personForm").onsubmit = async (e) => {
+  root.querySelector(".personForm").onsubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     try {
