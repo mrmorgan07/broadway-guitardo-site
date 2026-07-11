@@ -1608,6 +1608,9 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   .footer__bottom { flex-direction: column; align-items: flex-start; gap: 10px; }
   .leader img { aspect-ratio: 16 / 11; }
 
+  /* Красная линия после блока «О коллективе» — скрываем на мобильных */
+  .about__rule { display: none; }
+
   /* Метки постера на узких экранах: дату уводим вниз-влево, статусы
      оставляем сверху-справа — так они физически не могут наехать друг на
      друга при любой длине даты. Плюс компактнее по размеру. */
