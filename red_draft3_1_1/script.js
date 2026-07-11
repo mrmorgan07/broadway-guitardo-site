@@ -681,33 +681,75 @@ function renderFooter(db) {
    ========================================================================== */
 function initCarousel(root) {
   const track = $(".carousel__track", root);
-  const slides = $$(".carousel__slide", root);
-  if (!track || slides.length <= 1) return;
+  const realSlides = $$(".carousel__slide", root);
+  if (!track || realSlides.length <= 1) return;
+  const N = realSlides.length;
+
+  // Клоны по краям → бесшовная бесконечная прокрутка в обе стороны без «отмотки».
+  // Порядок трека: [клон последнего, 0..N-1, клон первого]. Позиции: 0=клон-last,
+  // 1..N = реальные, N+1 = клон-first.
+  const firstClone = realSlides[0].cloneNode(true);
+  const lastClone = realSlides[N - 1].cloneNode(true);
+  firstClone.setAttribute("aria-hidden", "true");
+  lastClone.setAttribute("aria-hidden", "true");
+  track.appendChild(firstClone);
+  track.insertBefore(lastClone, realSlides[0]);
 
   const scope = root.parentElement || document;
   const thumbs = $$(".carousel__thumb", scope);
   const thumbTrack = $(".carousel__thumbs-track", scope);
   const VISIBLE = 3; // сколько превью видно одновременно
 
-  let current = 0;
+  let pos = 1;          // физическая позиция трека (1..N — реальные слайды)
   let timer = null;
+  let animating = false;
+
+  const currentIndex = () => (pos - 1 + N) % N;
+
+  function paint(animate) {
+    track.style.transition = animate ? "" : "none";
+    track.style.transform = `translateX(-${pos * 100}%)`;
+  }
 
   // Превью-карусель: окно из VISIBLE штук, сдвигается вслед за активным слайдом
   function syncThumbs() {
+    const cur = currentIndex();
+    thumbs.forEach((t, idx) => t.classList.toggle("active", idx === cur));
     if (!thumbTrack || thumbs.length <= VISIBLE) return;
-    const startIdx = Math.min(Math.max(current - 1, 0), thumbs.length - VISIBLE);
+    const startIdx = Math.min(Math.max(cur - 1, 0), thumbs.length - VISIBLE);
     thumbTrack.style.transform = `translateX(${-thumbs[startIdx].offsetLeft}px)`;
   }
 
+  // После перехода на клон мгновенно (без анимации) прыгаем на реальный слайд.
+  // Ждём по длительности CSS-перехода (0 при prefers-reduced-motion).
+  function afterAnim(cb) {
+    const dur = parseFloat(getComputedStyle(track).transitionDuration) * 1000 || 0;
+    setTimeout(cb, dur + 20);
+  }
+
+  function step(dir) {
+    if (animating) return;
+    animating = true;
+    pos += dir;
+    paint(true);
+    syncThumbs();
+    afterAnim(() => {
+      if (pos === 0) { pos = N; paint(false); }
+      else if (pos === N + 1) { pos = 1; paint(false); }
+      animating = false;
+    });
+    restart();
+  }
+  const next = () => step(1);
+  const prev = () => step(-1);
+
   function goTo(i) {
-    current = (i + slides.length) % slides.length;
-    track.style.transform = `translateX(-${current * 100}%)`;
-    thumbs.forEach((t, idx) => t.classList.toggle("active", idx === current));
+    if (animating) return;
+    pos = i + 1;
+    paint(true);
     syncThumbs();
     restart();
   }
-  const next = () => goTo(current + 1);
-  const prev = () => goTo(current - 1);
 
   $(".next", root)?.addEventListener("click", (e) => { e.stopPropagation(); next(); });
   $(".prev", root)?.addEventListener("click", (e) => { e.stopPropagation(); prev(); });
@@ -725,6 +767,8 @@ function initCarousel(root) {
     if (Math.abs(dx) > 40) (dx < 0 ? next : prev)();
   });
 
+  paint(false);   // стартовая позиция (первый реальный слайд) без анимации
+  syncThumbs();
   start();
 }
 
