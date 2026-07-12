@@ -16,6 +16,8 @@
 const AUTH = { token: "choir_token", csrf: "choir_csrf" };
 let db = null;
 let editingProjectId = null;
+let editRoles = [];   // роли редактируемого спектакля [{id,name}]
+let editCasts = [];   // составы редактируемого спектакля [{id,title,items:[{roleId,soloistId}]}]
 let confirmCallback = null;
 let mustChangePassword = false;  // используется ли пароль по умолчанию
 let isDirty = false;             // есть несохранённые изменения в форме
@@ -145,6 +147,8 @@ function showView(name) {
     dashboard: "viewDashboard",
     projects: "viewProjects",
     projectEdit: "viewProjectEdit",
+    soloists: "viewSoloists",
+    afisha: "viewAfisha",
     hero: "viewHero",
     about: "viewAbout",
     director: "viewDirector",
@@ -168,6 +172,8 @@ document.getElementById("sideNav").addEventListener("click", (e) => {
   showView(btn.dataset.view);
   if (btn.dataset.view === "dashboard") renderDashboard();
   if (btn.dataset.view === "projects") renderProjectsList();
+  if (btn.dataset.view === "soloists") renderSoloistsRegistry();
+  if (btn.dataset.view === "afisha") renderAfisha();
   if (btn.dataset.view === "hero") renderHeroSection();
   if (btn.dataset.view === "about") renderAbout();
   if (btn.dataset.view === "director") renderDirector();
@@ -274,36 +280,15 @@ function openProjectEdit(id) {
             <input class="form-control" name="title" value="${esc(p.title)}" required>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Дата и время</label>
-            <input class="form-control" name="date" value="${esc(p.date)}" placeholder="15 ноября 2026, 19:00">
-          </div>
-          <div class="col-md-6">
             <label class="form-label">Тег</label>
             <input class="form-control" name="tag" value="${esc(p.tag)}">
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Длительность</label>
             <input class="form-control" name="duration" value="${esc(p.duration)}" placeholder="2 ч 30 мин">
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Стоимость от (₽)</label>
-            <input class="form-control" name="priceFrom" type="number" min="0" step="1" value="${esc(p.priceFrom ?? "")}" placeholder="1500">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Стоимость до (₽)</label>
-            <input class="form-control" name="priceTo" type="number" min="0" step="1" value="${esc(p.priceTo ?? "")}" placeholder="4000">
-          </div>
-          <div class="col-md-6">
-            <div class="form-check form-switch mt-md-4">
-              <input class="form-check-input" type="checkbox" role="switch" name="freeAdmission" id="freeAdmission" ${p.freeAdmission ? "checked" : ""}>
-              <label class="form-check-label" for="freeAdmission">Вход свободный <span class="text-secondary">(вместо стоимости)</span></label>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-check form-switch mt-md-4">
-              <input class="form-check-input" type="checkbox" role="switch" name="soldOut" id="soldOut" ${p.soldOut ? "checked" : ""}>
-              <label class="form-check-label" for="soldOut">Билетов больше нет</label>
-            </div>
+          <div class="col-12">
+            <div class="alert alert-secondary py-2 small mb-0">Дата, цена, билеты и состав задаются для каждого показа в разделе <b>«Афиша»</b>.</div>
           </div>
           <div class="col-12">
             <label class="form-label">Описание *</label>
@@ -324,13 +309,15 @@ function openProjectEdit(id) {
             <input type="file" id="galleryFile" accept="image/*" multiple class="form-control mt-2">
           </div>
           <div class="col-12">
-            <label class="form-label">Солисты</label>
-            <div id="soloistsList"></div>
-            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addSoloist">+ Солист</button>
+            <label class="form-label">Роли спектакля</label>
+            <div id="projRolesList"></div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addRole">+ Роль</button>
           </div>
           <div class="col-12">
-            <label class="form-label">Ссылка на билеты</label>
-            <input class="form-control" name="ticketLink" type="url" value="${esc(p.ticketLink)}">
+            <label class="form-label">Составы</label>
+            <div id="castsList"></div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addCast">+ Состав</button>
+            <div class="form-text">Роли — из списка выше. Солисты — из справочника «Солисты». В афише каждый показ выбирает один из составов.</div>
           </div>
           <div class="col-12">
             <details class="adv-block">
@@ -350,7 +337,14 @@ function openProjectEdit(id) {
 
   const gallery = [...(p.gallery || [])];
   renderGallerySortable(gallery);
-  renderSoloists(p.soloists || []);
+
+  editRoles = (p.roles || []).map((r) => ({ id: r.id || uid("role"), name: r.name || "" }));
+  editCasts = (p.casts || []).map((c) => ({
+    id: c.id || uid("cast"), title: c.title || "",
+    items: (c.items || []).map((it) => ({ roleId: it.roleId || "", soloistId: it.soloistId || "" }))
+  }));
+  drawProjRoles();
+  drawCasts();
 
   document.getElementById("uploadPoster").onclick = async () => {
     const f = document.getElementById("posterFile").files[0];
@@ -373,10 +367,13 @@ function openProjectEdit(id) {
     e.target.value = "";
   };
 
-  document.getElementById("addSoloist").onclick = () => {
-    const list = document.getElementById("soloistsList");
-    list.insertAdjacentHTML("beforeend", soloistRow({}));
-    bindSoloistRow(list.lastElementChild);
+  document.getElementById("addRole").onclick = () => {
+    editRoles.push({ id: uid("role"), name: "" });
+    drawProjRoles(); drawCasts();
+  };
+  document.getElementById("addCast").onclick = () => {
+    editCasts.push({ id: uid("cast"), title: "", items: [] });
+    drawCasts();
   };
 
   document.getElementById("projectForm").onsubmit = async (e) => {
@@ -385,74 +382,11 @@ function openProjectEdit(id) {
   };
 }
 
-// Привести солиста к объекту {name, role, photo} (поддержка старых строк "Имя — Роль")
-function normalizeSoloist(s) {
-  if (s && typeof s === "object") {
-    return { name: s.name || "", role: s.role || "", photo: s.photo || "" };
-  }
-  const parts = String(s || "").split(/\s+[—–-]\s+/);
-  return { name: (parts[0] || "").trim(), role: (parts[1] || "").trim(), photo: "" };
-}
-
 function mediaSrc(p) {
   if (!p) return "";
   return p.startsWith("/") || p.startsWith("http") ? p : "/uploads/" + p;
 }
 
-function soloistRow(s = {}) {
-  const photo = s.photo || "";
-  const src = mediaSrc(photo);
-  return `
-    <div class="soloist-row" data-soloist>
-      <div class="soloist-photo-box">
-        ${src
-          ? `<img class="soloist-thumb" src="${esc(src)}" alt="">`
-          : `<span class="soloist-thumb soloist-thumb--empty">нет фото</span>`}
-        <input type="hidden" class="soloist-photo" value="${esc(photo)}">
-        <input type="file" class="soloist-file" accept="image/*" hidden>
-        <button type="button" class="btn btn-outline-secondary btn-sm soloist-upload">📷 Фото</button>
-      </div>
-      <input class="form-control soloist-name" placeholder="Имя" value="${esc(s.name || "")}">
-      <input class="form-control soloist-role" placeholder="Роль" value="${esc(s.role || "")}">
-      <button type="button" class="btn btn-outline-danger btn-sm rm-soloist">✕</button>
-    </div>`;
-}
-
-function bindSoloistRow(row) {
-  row.querySelector(".rm-soloist").onclick = () => row.remove();
-
-  const fileInput = row.querySelector(".soloist-file");
-  row.querySelector(".soloist-upload").onclick = () => fileInput.click();
-
-  fileInput.onchange = async () => {
-    const f = fileInput.files[0];
-    if (!f) return;
-    try {
-      const r = await uploadFile(f);
-      row.querySelector(".soloist-photo").value = r.url;
-      const box = row.querySelector(".soloist-photo-box");
-      let img = box.querySelector("img.soloist-thumb");
-      if (!img) {
-        const empty = box.querySelector(".soloist-thumb--empty");
-        if (empty) empty.remove();
-        img = document.createElement("img");
-        img.className = "soloist-thumb";
-        box.prepend(img);
-      }
-      img.src = r.thumb || r.url;
-      toast("Фото солиста загружено");
-    } catch (e) {
-      toast(e.message, "error");
-    }
-    fileInput.value = "";
-  };
-}
-
-function renderSoloists(list) {
-  const el = document.getElementById("soloistsList");
-  el.innerHTML = list.map((s) => soloistRow(normalizeSoloist(s))).join("");
-  el.querySelectorAll("[data-soloist]").forEach(bindSoloistRow);
-}
 
 function renderGallerySortable(urls) {
   const list = document.getElementById("galleryList");
@@ -493,22 +427,17 @@ async function saveProject(gallery) {
   const f = document.getElementById("projectForm");
   const body = {
     title: f.title.value.trim(),
-    date: f.date.value.trim(),
     tag: f.tag.value.trim(),
+    duration: f.duration.value.trim(),
     description: f.description.value.trim(),
     poster: f.poster.value.trim() || document.getElementById("posterUrl").value,
     gallery: [...document.querySelectorAll("#galleryList [data-gallery-input]")].map((i) => i.value.trim()).filter(Boolean),
-    soloists: [...document.querySelectorAll("#soloistsList [data-soloist]")].map((row) => ({
-      name: row.querySelector(".soloist-name").value.trim(),
-      role: row.querySelector(".soloist-role").value.trim(),
-      photo: row.querySelector(".soloist-photo").value.trim()
-    })).filter((s) => s.name || s.role),
-    ticketLink: f.ticketLink.value.trim(),
-    duration: f.duration.value.trim(),
-    priceFrom: f.priceFrom.value.trim(),
-    priceTo: f.priceTo.value.trim(),
-    freeAdmission: f.freeAdmission.checked,
-    soldOut: f.soldOut.checked
+    roles: editRoles.map((r) => ({ id: r.id, name: r.name.trim() })).filter((r) => r.name),
+    casts: editCasts.map((c) => ({
+      id: c.id,
+      title: c.title.trim(),
+      items: c.items.filter((it) => it.roleId || it.soloistId)
+    })).filter((c) => c.title || c.items.length)
   };
 
   if (!body.title || !body.description) return toast("Заполните обязательные поля", "error");
@@ -525,6 +454,238 @@ async function saveProject(gallery) {
     showView("projects");
     renderProjectsList();
   } catch (e) { toast(e.message, "error"); }
+}
+
+/* ==========================================================================
+   РОЛИ И СОСТАВЫ СПЕКТАКЛЯ (внутри редактора спектакля)
+   ========================================================================== */
+function uid(prefix) {
+  return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function roleOptionsHtml(sel) {
+  return `<option value="">— роль —</option>` +
+    editRoles.filter((r) => r.name.trim())
+      .map((r) => `<option value="${esc(r.id)}"${r.id === sel ? " selected" : ""}>${esc(r.name)}</option>`).join("");
+}
+function soloistOptionsHtml(sel) {
+  return `<option value="">— солист —</option>` +
+    (db.soloists || [])
+      .map((s) => `<option value="${esc(s.id)}"${s.id === sel ? " selected" : ""}>${esc(s.name)}</option>`).join("");
+}
+
+function drawProjRoles() {
+  const el = document.getElementById("projRolesList");
+  if (!el) return;
+  el.innerHTML = editRoles.length
+    ? editRoles.map((r, i) => `
+      <div class="d-flex gap-2 mb-2" data-prole="${i}">
+        <input class="form-control prole-name" value="${esc(r.name)}" placeholder="Роль (напр. Граф фон Кролок)">
+        <button type="button" class="btn btn-outline-danger btn-sm rm-prole">✕</button>
+      </div>`).join("")
+    : `<div class="text-muted small mb-2">Пока нет ролей.</div>`;
+  el.querySelectorAll("[data-prole]").forEach((row) => {
+    const i = Number(row.dataset.prole);
+    row.querySelector(".prole-name").oninput = (e) => { editRoles[i].name = e.target.value; };
+    row.querySelector(".prole-name").onblur = () => drawCasts(); // обновить подписи ролей в селектах составов
+    row.querySelector(".rm-prole").onclick = () => { editRoles.splice(i, 1); drawProjRoles(); drawCasts(); };
+  });
+}
+
+function drawCasts() {
+  const el = document.getElementById("castsList");
+  if (!el) return;
+  const noSoloists = !(db.soloists || []).length;
+  el.innerHTML =
+    (noSoloists ? `<div class="alert alert-warning py-2 small">Справочник «Солисты» пуст — сначала добавьте солистов в разделе «Солисты».</div>` : "") +
+    (editCasts.length
+      ? editCasts.map((c, ci) => `
+        <div class="card bg-dark border-secondary mb-3" data-cast="${ci}"><div class="card-body">
+          <div class="d-flex gap-2 mb-2">
+            <input class="form-control cast-title" value="${esc(c.title)}" placeholder="Название состава (напр. Основной состав)">
+            <button type="button" class="btn btn-outline-danger btn-sm rm-cast">Удалить</button>
+          </div>
+          <div class="cast-items">
+            ${c.items.map((it, ii) => `
+              <div class="d-flex gap-2 mb-2" data-citem="${ii}">
+                <select class="form-select cast-role">${roleOptionsHtml(it.roleId)}</select>
+                <select class="form-select cast-soloist">${soloistOptionsHtml(it.soloistId)}</select>
+                <button type="button" class="btn btn-outline-danger btn-sm rm-citem">✕</button>
+              </div>`).join("")}
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm add-citem">+ Роль→Солист</button>
+        </div></div>`).join("")
+      : `<div class="text-muted small mb-2">Пока нет составов.</div>`);
+
+  el.querySelectorAll("[data-cast]").forEach((card) => {
+    const ci = Number(card.dataset.cast);
+    card.querySelector(".cast-title").oninput = (e) => { editCasts[ci].title = e.target.value; };
+    card.querySelector(".rm-cast").onclick = () => { editCasts.splice(ci, 1); drawCasts(); };
+    card.querySelector(".add-citem").onclick = () => { editCasts[ci].items.push({ roleId: "", soloistId: "" }); drawCasts(); };
+    card.querySelectorAll("[data-citem]").forEach((row) => {
+      const ii = Number(row.dataset.citem);
+      row.querySelector(".cast-role").onchange = (e) => { editCasts[ci].items[ii].roleId = e.target.value; };
+      row.querySelector(".cast-soloist").onchange = (e) => { editCasts[ci].items[ii].soloistId = e.target.value; };
+      row.querySelector(".rm-citem").onclick = () => { editCasts[ci].items.splice(ii, 1); drawCasts(); };
+    });
+  });
+}
+
+/* ==========================================================================
+   СПРАВОЧНИК СОЛИСТОВ (глобальный, с фото)
+   ========================================================================== */
+function renderSoloistsRegistry() {
+  const list = (db.soloists || []).map((s) => ({
+    id: s.id || uid("sol"), name: s.name || "", photo: s.photo || "", bio: s.bio || ""
+  }));
+
+  function draw() {
+    document.getElementById("viewSoloists").innerHTML = `
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <h2 class="mb-0" style="font-family:var(--font-heading)">Солисты</h2>
+        <button class="btn btn-outline-secondary btn-sm" id="addSoloistReg">+ Солист</button>
+      </div>
+      <p class="text-muted small mb-3">Справочник солистов с фото. Используются в составах спектаклей.</p>
+      <div id="soloistsRegList" class="row g-3">
+        ${list.length ? list.map((s, i) => `
+          <div class="col-md-6" data-sol="${i}">
+            <div class="card bg-dark border-secondary"><div class="card-body d-flex gap-3">
+              <div class="text-center">
+                ${s.photo
+                  ? `<img src="${esc(mediaSrc(s.photo))}" class="rounded" style="width:80px;height:80px;object-fit:cover" alt="">`
+                  : `<div class="text-muted d-flex align-items-center justify-content-center border border-secondary rounded" style="width:80px;height:80px;font-size:.7rem">нет фото</div>`}
+                <input type="hidden" class="sol-photo" value="${esc(s.photo)}">
+                <input type="file" class="sol-file d-none" accept="image/*">
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2 sol-upload">📷</button>
+              </div>
+              <div class="flex-grow-1">
+                <input class="form-control mb-2 sol-name" value="${esc(s.name)}" placeholder="Имя">
+                <textarea class="form-control sol-bio" rows="2" placeholder="Био (необязательно)">${esc(s.bio)}</textarea>
+              </div>
+              <button type="button" class="btn btn-outline-danger btn-sm rm-sol align-self-start">✕</button>
+            </div></div>
+          </div>`).join("") : `<div class="col-12 text-muted">Пока нет солистов.</div>`}
+      </div>
+      <button class="btn btn-gold mt-3" id="saveSoloistsReg">Сохранить</button>`;
+
+    document.getElementById("addSoloistReg").onclick = () => { list.push({ id: uid("sol"), name: "", photo: "", bio: "" }); draw(); };
+
+    document.querySelectorAll("#soloistsRegList [data-sol]").forEach((row) => {
+      const i = Number(row.dataset.sol);
+      row.querySelector(".sol-name").oninput = (e) => { list[i].name = e.target.value; };
+      row.querySelector(".sol-bio").oninput = (e) => { list[i].bio = e.target.value; };
+      row.querySelector(".rm-sol").onclick = () => { list.splice(i, 1); draw(); };
+      const file = row.querySelector(".sol-file");
+      row.querySelector(".sol-upload").onclick = () => file.click();
+      file.onchange = async () => {
+        const f = file.files[0]; if (!f) return;
+        try {
+          const r = await uploadFile(f);
+          list[i].photo = r.url;
+          draw();
+          toast("Фото загружено");
+        } catch (e) { toast(e.message, "error"); }
+      };
+    });
+
+    document.getElementById("saveSoloistsReg").onclick = async () => {
+      const clean = list
+        .map((s) => ({ id: s.id, name: s.name.trim(), photo: s.photo.trim(), bio: (s.bio || "").trim() }))
+        .filter((s) => s.name);
+      try {
+        await api("/api/soloists", { method: "PUT", body: JSON.stringify(clean) });
+        db = await api("/api/content");
+        toast("Солисты сохранены");
+        renderSoloistsRegistry();
+      } catch (e) { toast(e.message, "error"); }
+    };
+  }
+  draw();
+}
+
+/* ==========================================================================
+   АФИША (расписание показов: спектакль + дата + состав)
+   ========================================================================== */
+function renderAfisha() {
+  const shows = (db.shows || []).map((s) => ({
+    id: s.id || uid("show"),
+    spectacleId: s.spectacleId || "",
+    date: s.date || "",
+    ticketLink: s.ticketLink || "",
+    priceFrom: s.priceFrom ?? "",
+    priceTo: s.priceTo ?? "",
+    freeAdmission: !!s.freeAdmission,
+    soldOut: !!s.soldOut,
+    castId: s.castId || ""
+  }));
+
+  const spectacleOptions = (sel) => `<option value="">— спектакль —</option>` +
+    (db.projects || []).map((p) => `<option value="${esc(p.id)}"${p.id === sel ? " selected" : ""}>${esc(p.title)}</option>`).join("");
+  const castOptions = (spectacleId, sel) => {
+    const p = (db.projects || []).find((x) => x.id === spectacleId);
+    const casts = (p && p.casts) || [];
+    return `<option value="">— состав —</option>` +
+      casts.map((c) => `<option value="${esc(c.id)}"${c.id === sel ? " selected" : ""}>${esc(c.title || "Состав")}</option>`).join("");
+  };
+
+  function draw() {
+    document.getElementById("viewAfisha").innerHTML = `
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <h2 class="mb-0" style="font-family:var(--font-heading)">Афиша (расписание)</h2>
+        <button class="btn btn-outline-secondary btn-sm" id="addShow">+ Показ</button>
+      </div>
+      <p class="text-muted small mb-3">Показ = спектакль + дата + состав. Один спектакль может идти в разные даты с разными составами.</p>
+      <div id="showsList">
+        ${shows.length ? shows.map((s, i) => `
+          <div class="card bg-dark border-secondary mb-3" data-show="${i}"><div class="card-body row g-2">
+            <div class="col-md-4"><label class="form-label">Спектакль</label><select class="form-select show-spectacle">${spectacleOptions(s.spectacleId)}</select></div>
+            <div class="col-md-4"><label class="form-label">Дата и время</label><input class="form-control show-date" value="${esc(s.date)}" placeholder="15 ноября 2026, 19:00"></div>
+            <div class="col-md-4"><label class="form-label">Состав</label><select class="form-select show-cast">${castOptions(s.spectacleId, s.castId)}</select></div>
+            <div class="col-md-6"><label class="form-label">Ссылка на билеты</label><input class="form-control show-ticket" value="${esc(s.ticketLink)}"></div>
+            <div class="col-md-3"><label class="form-label">Цена от</label><input class="form-control show-pfrom" type="number" min="0" value="${esc(s.priceFrom)}"></div>
+            <div class="col-md-3"><label class="form-label">Цена до</label><input class="form-control show-pto" type="number" min="0" value="${esc(s.priceTo)}"></div>
+            <div class="col-12 d-flex align-items-center gap-4 flex-wrap">
+              <div class="form-check form-switch"><input class="form-check-input show-free" type="checkbox" ${s.freeAdmission ? "checked" : ""}><label class="form-check-label">Вход свободный</label></div>
+              <div class="form-check form-switch"><input class="form-check-input show-sold" type="checkbox" ${s.soldOut ? "checked" : ""}><label class="form-check-label">Билетов нет</label></div>
+              <button type="button" class="btn btn-outline-danger btn-sm rm-show ms-auto">Удалить показ</button>
+            </div>
+          </div></div>`).join("") : `<div class="text-muted mb-2">Пока нет показов.</div>`}
+      </div>
+      <button class="btn btn-gold mt-2" id="saveShows">Сохранить афишу</button>`;
+
+    document.getElementById("addShow").onclick = () => {
+      shows.push({ id: uid("show"), spectacleId: "", date: "", ticketLink: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, castId: "" });
+      draw();
+    };
+
+    document.querySelectorAll("#showsList [data-show]").forEach((card) => {
+      const i = Number(card.dataset.show);
+      card.querySelector(".show-spectacle").onchange = (e) => { shows[i].spectacleId = e.target.value; shows[i].castId = ""; draw(); };
+      card.querySelector(".show-date").oninput = (e) => { shows[i].date = e.target.value; };
+      card.querySelector(".show-cast").onchange = (e) => { shows[i].castId = e.target.value; };
+      card.querySelector(".show-ticket").oninput = (e) => { shows[i].ticketLink = e.target.value; };
+      card.querySelector(".show-pfrom").oninput = (e) => { shows[i].priceFrom = e.target.value; };
+      card.querySelector(".show-pto").oninput = (e) => { shows[i].priceTo = e.target.value; };
+      card.querySelector(".show-free").onchange = (e) => { shows[i].freeAdmission = e.target.checked; };
+      card.querySelector(".show-sold").onchange = (e) => { shows[i].soldOut = e.target.checked; };
+      card.querySelector(".rm-show").onclick = () => { shows.splice(i, 1); draw(); };
+    });
+
+    document.getElementById("saveShows").onclick = async () => {
+      const clean = shows.filter((s) => s.spectacleId).map((s) => ({
+        id: s.id, spectacleId: s.spectacleId, date: (s.date || "").trim(),
+        ticketLink: (s.ticketLink || "").trim(), priceFrom: s.priceFrom, priceTo: s.priceTo,
+        freeAdmission: !!s.freeAdmission, soldOut: !!s.soldOut, castId: s.castId || null
+      }));
+      try {
+        await api("/api/shows", { method: "PUT", body: JSON.stringify(clean) });
+        db = await api("/api/content");
+        toast("Афиша сохранена");
+        renderAfisha();
+      } catch (e) { toast(e.message, "error"); }
+    };
+  }
+  draw();
 }
 
 function deleteProject(id) {
