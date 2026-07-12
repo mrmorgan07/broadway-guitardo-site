@@ -463,6 +463,17 @@ function uid(prefix) {
   return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
 
+// datetime-local ("2026-09-26T19:00") → человекочитаемо "26 сентября 2026, 19:00"
+function formatRuDateTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const months = ["января", "февраля", "марта", "апреля", "мая", "июня",
+    "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}, ${hh}:${mm}`;
+}
+
 function roleOptionsHtml(sel) {
   return `<option value="">— роль —</option>` +
     editRoles.filter((r) => r.name.trim())
@@ -610,6 +621,7 @@ function renderAfisha() {
   const shows = (db.shows || []).map((s) => ({
     id: s.id || uid("show"),
     spectacleId: s.spectacleId || "",
+    datetime: s.datetime || "",
     date: s.date || "",
     ticketLink: s.ticketLink || "",
     priceFrom: s.priceFrom ?? "",
@@ -639,7 +651,10 @@ function renderAfisha() {
         ${shows.length ? shows.map((s, i) => `
           <div class="card bg-dark border-secondary mb-3" data-show="${i}"><div class="card-body row g-2">
             <div class="col-md-4"><label class="form-label">Спектакль</label><select class="form-select show-spectacle">${spectacleOptions(s.spectacleId)}</select></div>
-            <div class="col-md-4"><label class="form-label">Дата и время</label><input class="form-control show-date" value="${esc(s.date)}" placeholder="15 ноября 2026, 19:00"></div>
+            <div class="col-md-4"><label class="form-label">Дата и время</label>
+              <input type="datetime-local" class="form-control show-datetime" value="${esc(s.datetime)}">
+              ${!s.datetime && s.date ? `<div class="form-text">текущее: ${esc(s.date)} — выберите дату заново</div>` : ""}
+            </div>
             <div class="col-md-4"><label class="form-label">Состав</label><select class="form-select show-cast">${castOptions(s.spectacleId, s.castId)}</select></div>
             <div class="col-md-6"><label class="form-label">Ссылка на билеты</label><input class="form-control show-ticket" value="${esc(s.ticketLink)}"></div>
             <div class="col-md-3"><label class="form-label">Цена от</label><input class="form-control show-pfrom" type="number" min="0" value="${esc(s.priceFrom)}"></div>
@@ -654,14 +669,14 @@ function renderAfisha() {
       <button class="btn btn-gold mt-2" id="saveShows">Сохранить афишу</button>`;
 
     document.getElementById("addShow").onclick = () => {
-      shows.push({ id: uid("show"), spectacleId: "", date: "", ticketLink: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, castId: "" });
+      shows.push({ id: uid("show"), spectacleId: "", datetime: "", date: "", ticketLink: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, castId: "" });
       draw();
     };
 
     document.querySelectorAll("#showsList [data-show]").forEach((card) => {
       const i = Number(card.dataset.show);
       card.querySelector(".show-spectacle").onchange = (e) => { shows[i].spectacleId = e.target.value; shows[i].castId = ""; draw(); };
-      card.querySelector(".show-date").oninput = (e) => { shows[i].date = e.target.value; };
+      card.querySelector(".show-datetime").onchange = (e) => { shows[i].datetime = e.target.value; };
       card.querySelector(".show-cast").onchange = (e) => { shows[i].castId = e.target.value; };
       card.querySelector(".show-ticket").oninput = (e) => { shows[i].ticketLink = e.target.value; };
       card.querySelector(".show-pfrom").oninput = (e) => { shows[i].priceFrom = e.target.value; };
@@ -673,7 +688,9 @@ function renderAfisha() {
 
     document.getElementById("saveShows").onclick = async () => {
       const clean = shows.filter((s) => s.spectacleId).map((s) => ({
-        id: s.id, spectacleId: s.spectacleId, date: (s.date || "").trim(),
+        id: s.id, spectacleId: s.spectacleId,
+        datetime: s.datetime || "",
+        date: s.datetime ? formatRuDateTime(s.datetime) : (s.date || "").trim(),
         ticketLink: (s.ticketLink || "").trim(), priceFrom: s.priceFrom, priceTo: s.priceTo,
         freeAdmission: !!s.freeAdmission, soldOut: !!s.soldOut, castId: s.castId || null
       }));
