@@ -93,6 +93,8 @@ app.post("/projects", requireAuth, requireCsrf, async (c) => {
     poster: body.poster || "",
     gallery: Array.isArray(body.gallery) ? body.gallery : [],
     soloists: Array.isArray(body.soloists) ? body.soloists : [],
+    roles: Array.isArray(body.roles) ? body.roles : [],
+    casts: Array.isArray(body.casts) ? body.casts : [],
     ticketLink: body.ticketLink || "",
     duration: body.duration || "",
     priceFrom: body.priceFrom ?? "",
@@ -129,6 +131,19 @@ app.delete("/projects/:id", requireAuth, requireCsrf, async (c) => {
   await writeContent(c.env, db);
   return c.json({ ok: true });
 });
+
+/* ---------- Глобальный справочник солистов (роли живут в спектакле; ДО /:section) ---------- */
+for (const key of ["soloists", "shows"]) {
+  app.get(`/${key}`, async (c) => c.json((await readContent(c.env))[key] || []));
+  app.put(`/${key}`, requireAuth, requireCsrf, async (c) => {
+    const body = await c.req.json().catch(() => []);
+    const arr = Array.isArray(body) ? body : (Array.isArray(body?.[key]) ? body[key] : []);
+    const db = await readContent(c.env);
+    db[key] = arr;
+    await writeContent(c.env, db);
+    return c.json(db[key]);
+  });
+}
 
 /* ---------- Секции ---------- */
 

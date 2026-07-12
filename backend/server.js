@@ -104,6 +104,31 @@ async function initStore() {
     console.log("🗄  content: перенесён в БД из db.json");
   }
 
+  // Одноразовая идемпотентная миграция: справочник солистов + афиша (shows).
+  // Афиша формируется из спектаклей, у которых указана дата (по одному показу).
+  if (contentCache && !Array.isArray(contentCache.shows)) {
+    contentCache.soloists = contentCache.soloists || [];
+    (contentCache.projects || []).forEach((p) => {
+      p.roles = Array.isArray(p.roles) ? p.roles : [];
+      p.casts = Array.isArray(p.casts) ? p.casts : [];
+    });
+    contentCache.shows = (contentCache.projects || [])
+      .filter((p) => p.date)
+      .map((p) => ({
+        id: `show_${p.id}`,
+        spectacleId: p.id,
+        date: p.date || "",
+        ticketLink: p.ticketLink || "",
+        priceFrom: p.priceFrom ?? "",
+        priceTo: p.priceTo ?? "",
+        freeAdmission: !!p.freeAdmission,
+        soldOut: !!p.soldOut,
+        castId: null
+      }));
+    await kvSet("content", contentCache);
+    console.log(`🗄  миграция: афиша создана из спектаклей (${contentCache.shows.length} показов)`);
+  }
+
   authCache = await kvGet("auth");
   if (authCache == null) {
     authCache = fs.existsSync(AUTH_FILE)
@@ -360,6 +385,8 @@ app.post("/api/projects", requireAuth, requireCsrf, async (req, res) => {
     poster: body.poster || "",
     gallery: Array.isArray(body.gallery) ? body.gallery : [],
     soloists: Array.isArray(body.soloists) ? body.soloists : [],
+    roles: Array.isArray(body.roles) ? body.roles : [],
+    casts: Array.isArray(body.casts) ? body.casts : [],
     ticketLink: body.ticketLink || "",
     duration: body.duration || "",
     priceFrom: body.priceFrom ?? "",
@@ -438,6 +465,21 @@ function sectionRoutes(sectionKey) {
 }
 
 ["about", "director", "concertmaster", "choir", "contacts", "hero", "location", "gallery"].forEach(sectionRoutes);
+
+/* --- Глобальный справочник солистов (роли живут внутри спектакля) --- */
+function registryRoutes(key) {
+  app.get(`/api/${key}`, (_req, res) => {
+    res.json(readDb()[key] || []);
+  });
+  app.put(`/api/${key}`, requireAuth, requireCsrf, async (req, res) => {
+    const db = readDb();
+    const body = req.body;
+    db[key] = Array.isArray(body) ? body : (Array.isArray(body?.[key]) ? body[key] : []);
+    try { await writeDb(db); } catch { return res.status(500).json({ error: "Ошибка сохранения" }); }
+    res.json(db[key]);
+  });
+}
+["soloists", "shows"].forEach(registryRoutes);
 
 /* --- Auth --- */
 

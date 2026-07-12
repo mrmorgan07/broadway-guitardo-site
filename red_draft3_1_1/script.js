@@ -428,30 +428,46 @@ function renderLeaders(db) {
     </section>`;
 }
 
-function renderAfisha(projects = []) {
-  const cards = projects.map((p) => {
-    const tag = [p.tag, p.duration].filter(Boolean).join(" · ");
-    return `
-    <article class="poster" data-project="${esc(p.id)}">
+// Карточка афиши. attr — data-атрибут для клика (data-show или data-project).
+function posterCard(p, meta, attr) {
+  const tag = [p.tag, p.duration].filter(Boolean).join(" · ");
+  return `
+    <article class="poster" ${attr}>
       <div class="poster__media">
         <img src="${esc(imgUrl(p.poster))}" alt="${esc(p.title)}" loading="lazy">
-        ${p.date ? `<span class="poster__date">${esc(p.date)}</span>` : ""}
-        ${projectBadges(p)}
+        ${meta.date ? `<span class="poster__date">${esc(meta.date)}</span>` : ""}
+        ${projectBadges(meta)}
       </div>
       <h3 class="poster__title">${esc(p.title)}</h3>
       ${tag ? `<p class="poster__tag">${esc(tag)}</p>` : ""}
       <div class="poster__actions">
-        <button class="btn btn-secondary" data-project="${esc(p.id)}">О спектакле</button>
-        ${p.soldOut
+        <button class="btn btn-secondary" ${attr}>О спектакле</button>
+        ${meta.soldOut
           ? `<span class="btn btn-dark is-sold" aria-disabled="true">Билетов нет</span>`
-          : p.ticketLink
-            ? `<a class="btn btn-dark" href="${esc(p.ticketLink)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
-            : `<button class="btn btn-dark" data-project="${esc(p.id)}">Билеты</button>`}
+          : meta.ticketLink
+            ? `<a class="btn btn-dark" href="${esc(meta.ticketLink)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
+            : `<button class="btn btn-dark" ${attr}>Билеты</button>`}
       </div>
     </article>`;
-  }).join("");
+}
 
-  const dots = projects.map((_, i) =>
+// Афиша строится из расписания (shows) с привязкой к спектаклям.
+// Фолбэк на спектакли (легаси), если расписание пустое.
+function renderAfisha(shows, spectacles = []) {
+  const byId = Object.fromEntries((spectacles || []).map((p) => [p.id, p]));
+  let cardsArr;
+  if (Array.isArray(shows) && shows.length) {
+    cardsArr = shows
+      .map((s) => ({ s, p: byId[s.spectacleId] }))
+      .filter((x) => x.p)
+      .map(({ s, p }) => posterCard(p, s, `data-show="${esc(s.id)}"`));
+  } else {
+    cardsArr = (spectacles || []).map((p) => posterCard(p, p, `data-project="${esc(p.id)}"`));
+  }
+  const cards = cardsArr.join("");
+  const count = cardsArr.length;
+
+  const dots = Array.from({ length: count }, (_, i) =>
     `<button class="pcar__dot${i === 0 ? " active" : ""}" aria-label="Слайд ${i + 1}"></button>`
   ).join("");
 
@@ -464,7 +480,7 @@ function renderAfisha(projects = []) {
           <button class="pcar__arrow pcar__arrow--prev" aria-label="Назад"></button>
           <button class="pcar__arrow pcar__arrow--next" aria-label="Вперёд"></button>
         </div>
-        ${projects.length > 3 ? `<div class="pcar__dots">${dots}</div>` : ""}
+        ${count > 3 ? `<div class="pcar__dots">${dots}</div>` : ""}
       </div>
     </section>`;
 }
@@ -829,17 +845,44 @@ function initPosterCarousel(root) {
 /* ==========================================================================
    МОДАЛКА СПЕКТАКЛЯ
    ========================================================================== */
-function openProject(id) {
+// Открыть показ афиши: находим спектакль + его состав по castId.
+function openShow(showId) {
+  const show = (DB.shows || []).find((s) => s.id === showId);
+  if (!show) return;
+  openProject(show.spectacleId, show.castId, show);
+}
+
+// Состав спектакля для детали. castId — какой состав показать (из показа афиши).
+function renderCastBlock(p, castId) {
+  const casts = Array.isArray(p.casts) ? p.casts : [];
+  const cast = casts.length ? ((castId && casts.find((c) => c.id === castId)) || casts[0]) : null;
+  if (cast && (cast.items || []).length) {
+    const roleById = Object.fromEntries((p.roles || []).map((r) => [r.id, r.name]));
+    const solById = Object.fromEntries((DB.soloists || []).map((s) => [s.id, s]));
+    const cards = (cast.items || []).map((it) => {
+      const sol = solById[it.soloistId] || {};
+      if (!sol.name && !roleById[it.roleId]) return "";
+      return soloistCard({ name: sol.name || "", role: roleById[it.roleId] || "", photo: sol.photo || "" });
+    }).join("");
+    if (!cards) return "";
+    const title = cast.title ? `Состав — ${esc(cast.title)}` : "Солисты";
+    return `<div class="pd__block"><h3 class="pd__h3">${title}</h3><div class="soloists__grid">${cards}</div></div>`;
+  }
+  // Легаси-фолбэк: старые солисты внутри спектакля
+  const legacy = (p.soloists || []).map((s) => soloistCard(s)).join("");
+  return legacy ? `<div class="pd__block"><h3 class="pd__h3">Солисты</h3><div class="soloists__grid">${legacy}</div></div>` : "";
+}
+
+function openProject(id, castId, show) {
   const p = (DB.projects || []).find((x) => x.id === id);
   if (!p) return;
+  const m = show ? { ...p, ...show } : p; // показ переопределяет дату/цену/билеты/статус
 
   const slides = (p.gallery || []).map((src, i) => `
     <div class="carousel__slide"><img src="${esc(imgUrl(src))}" alt="Кадр ${i + 1}" loading="lazy"></div>`).join("");
 
   const thumbs = (p.gallery || []).map((src, i) => `
     <div class="carousel__thumb${i === 0 ? " active" : ""}"><img src="${esc(imgUrl(src))}" alt="" loading="lazy"></div>`).join("");
-
-  const soloists = (p.soloists || []).map((s) => soloistCard(s)).join("");
 
   const others = (DB.projects || [])
     .filter((x) => x.id !== id)
@@ -859,22 +902,19 @@ function openProject(id) {
 
       <div class="pd__info">
         <dl class="pd__meta">
-          <dt>Дата</dt><dd>${esc(p.date)}</dd>
+          ${m.date ? `<dt>Дата</dt><dd>${esc(m.date)}</dd>` : ""}
           ${p.tag ? `<dt>Формат</dt><dd>${esc(p.tag)}</dd>` : ""}
-          ${projectDetailMeta(p)}
+          ${projectDetailMeta(m)}
         </dl>
         <div class="pd__desc">
           <p>${esc(p.description)}</p>
-          ${p.soldOut
+          ${m.soldOut
             ? `<span class="btn btn-primary is-sold" aria-disabled="true">Билетов нет</span>`
-            : p.ticketLink ? `<a href="${esc(p.ticketLink)}" class="btn btn-primary" target="_blank" rel="noopener">Билеты</a>` : ""}
+            : m.ticketLink ? `<a href="${esc(m.ticketLink)}" class="btn btn-primary" target="_blank" rel="noopener">Билеты</a>` : ""}
         </div>
       </div>
 
-      ${soloists ? `<div class="pd__block">
-        <h3 class="pd__h3">Солисты</h3>
-        <div class="soloists__grid">${soloists}</div>
-      </div>` : ""}
+      ${renderCastBlock(p, castId)}
 
       ${slides ? `<div class="pd__block">
         <h3 class="pd__h3">Галерея</h3>
@@ -1057,6 +1097,8 @@ function initUI() {
 
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-stop]")) return; // прямые ссылки (Билеты)
+    const showEl = e.target.closest("[data-show]");
+    if (showEl) { e.preventDefault(); openShow(showEl.dataset.show); return; }
     const proj = e.target.closest("[data-project]");
     if (proj) { e.preventDefault(); openProject(proj.dataset.project); return; }
     if (e.target.closest("[data-open-trailer]")) { openTrailer(); return; }
@@ -1116,7 +1158,7 @@ async function boot() {
     renderAbout(DB.about) +
     renderSlogan(quote) +
     renderLeaders(DB) +
-    renderAfisha(DB.projects) +
+    renderAfisha(DB.shows, DB.projects) +
     renderFeature(DB) +
     renderGalleryMosaic(DB, SLOGAN_DEFAULT, uploadsPhotos) +
     renderInvite(DB) +
