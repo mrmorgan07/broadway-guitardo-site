@@ -494,9 +494,14 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   background: var(--panel);
 }
 .about__carousel { border: none; border-radius: 28px; }
-/* Галерея «О коллективе»: фото выше, без рамок и стрелок */
+/* Галерея «О коллективе»: фото выше; стрелки со слабой подложкой для читаемости на фото */
 .about__carousel .carousel__slide img { aspect-ratio: 5 / 4; }
-.about__carousel .carousel__arrow { display: none; }
+.about__carousel .carousel__arrow {
+  background: rgba(10, 8, 9, 0.42);
+  border-radius: 50%;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
 
 /* Превью — карусель из 3 видимых, сдвигается вслед за главной */
 .about__photo .carousel__thumbs {
@@ -1843,7 +1848,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 /* ==========================================================================
    ГАЛЕРЕЯ — ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ КРУПНЫМИ КАДРАМИ
    ========================================================================== */
-.gv-scroll-gallery { margin-top: clamp(36px, 5vw, 60px); }
+.gv-scroll-gallery { margin-top: clamp(36px, 5vw, 60px); position: relative; }
 
 .gv-scroll {
   overflow-x: auto;
@@ -1874,6 +1879,43 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   text-transform: uppercase;
   color: var(--muted);
   margin-top: 14px;
+}
+
+/* Кнопки листания галереи — по бокам ленты (десктоп) */
+.gv-scroll__arrow {
+  position: absolute;
+  top: clamp(150px, 29vh, 280px);
+  transform: translateY(-50%);
+  width: 48px; height: 48px;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 8, 9, 0.55);
+  border: 1px solid rgba(243, 236, 226, 0.15);
+  border-radius: 50%;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.2s, transform 0.2s;
+}
+.gv-scroll__arrow::after {
+  content: "";
+  width: 12px; height: 12px;
+  border-right: 2px solid var(--cream);
+  border-bottom: 2px solid var(--cream);
+}
+.gv-scroll__arrow.prev { left: 12px; }
+.gv-scroll__arrow.next { right: 12px; }
+.gv-scroll__arrow.prev::after { transform: rotate(135deg); margin-left: 3px; }
+.gv-scroll__arrow.next::after { transform: rotate(-45deg); margin-right: 3px; }
+.gv-scroll__arrow:hover { background: var(--red); transform: translateY(-50%) scale(1.08); }
+
+/* На тач-экранах листаем свайпом — кнопки прячем, подсказку показываем */
+@media (hover: none), (max-width: 720px) {
+  .gv-scroll__arrow { display: none; }
+}
+@media (hover: hover) and (min-width: 721px) {
+  .gv-scroll__hint { display: none; }
 }
 
 @media (max-width: 720px) {
