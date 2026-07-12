@@ -428,6 +428,13 @@ function renderLeaders(db) {
     </section>`;
 }
 
+// Ключ сортировки показа: datetime, иначе парсим русскую дату, иначе — в конец.
+function showTime(s) {
+  if (s && s.datetime) { const t = Date.parse(s.datetime); if (!isNaN(t)) return t; }
+  const d = parseRuDate(s && s.date);
+  return d ? d.getTime() : Infinity;
+}
+
 // Карточка афиши. attr — data-атрибут для клика (data-show или data-project).
 function posterCard(p, meta, attr) {
   const tag = [p.tag, p.duration].filter(Boolean).join(" · ");
@@ -458,6 +465,7 @@ function renderAfisha(shows, spectacles = []) {
   const fromShows = (Array.isArray(shows) ? shows : [])
     .map((s) => ({ s, p: byId[s.spectacleId] }))
     .filter((x) => x.p)
+    .sort((a, b) => showTime(a.s) - showTime(b.s))
     .map(({ s, p }) => posterCard(p, s, `data-show="${esc(s.id)}"`));
   // Фолбэк на спектакли, если расписание пусто или все показы «осиротели»
   const cardsArr = fromShows.length
