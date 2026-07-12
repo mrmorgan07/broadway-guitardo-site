@@ -105,6 +105,14 @@ function featuredProject(db) {
   return projects.find((x) => (x.title || "").trim().toLowerCase() === heroTitle) || projects[0];
 }
 
+// «Основной состав» спектакля: состав с названием, содержащим «основ», иначе первый.
+function mainCastId(p) {
+  const casts = Array.isArray(p && p.casts) ? p.casts : [];
+  if (!casts.length) return "";
+  const main = casts.find((c) => /основ/i.test(c.title || ""));
+  return (main || casts[0]).id || "";
+}
+
 /* ==========================================================================
    РЕНДЕР СЕКЦИЙ
    ========================================================================== */
@@ -527,7 +535,7 @@ function renderFeature(db) {
           <p class="section-eyebrow">Текущий проект</p>
           <p class="feature__cta-desc">${esc(p.description)}</p>
           <div class="hero__actions" style="justify-content:center">
-            <button class="btn btn-secondary" data-project="${esc(p.id)}">О спектакле</button>
+            <button class="btn btn-secondary" data-project="${esc(p.id)}" data-cast="${esc(mainCastId(p))}">О спектакле</button>
           </div>
         </div>
 
@@ -1107,7 +1115,7 @@ function initUI() {
     const showEl = e.target.closest("[data-show]");
     if (showEl) { e.preventDefault(); openShow(showEl.dataset.show); return; }
     const proj = e.target.closest("[data-project]");
-    if (proj) { e.preventDefault(); openProject(proj.dataset.project); return; }
+    if (proj) { e.preventDefault(); openProject(proj.dataset.project, proj.dataset.cast || undefined); return; }
     if (e.target.closest("[data-open-trailer]")) { openTrailer(); return; }
     if (e.target.closest("[data-close-trailer]") || e.target.id === "trailerModal") { closeTrailer(); return; }
     if (e.target.closest("[data-close-project]") || e.target.id === "projectModal") { closeProject(); return; }
