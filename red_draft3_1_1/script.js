@@ -349,6 +349,9 @@ function renderAbout(about = {}) {
     ? `<div class="about__photo reveal">
          <div class="carousel about__carousel" data-carousel>
            <div class="carousel__track">${slides}</div>
+           ${photos.length > 1 ? `
+             <button class="carousel__arrow prev" aria-label="Предыдущее фото"></button>
+             <button class="carousel__arrow next" aria-label="Следующее фото"></button>` : ""}
          </div>
          ${photos.length > 1 ? `<div class="carousel__thumbs"><div class="carousel__thumbs-track">${thumbs}</div></div>` : ""}
        </div>`
@@ -584,9 +587,11 @@ function renderGalleryMosaic(db, sloganText, uploadsPhotos) {
           ${stat[2] ? `<div class="gcm__photo gcm__photo--2"><img src="${esc(stat[2])}" alt="" loading="lazy"></div>` : ""}
         </div>
 
-        <!-- Галерея: горизонтальный скролл -->
+        <!-- Галерея: горизонтальный скролл + кнопки листания -->
         <div class="gv-scroll-gallery reveal d1">
           <div class="gv-scroll"><div class="gv-scroll__track">${scrollSlides}</div></div>
+          <button class="gv-scroll__arrow prev" aria-label="Назад"></button>
+          <button class="gv-scroll__arrow next" aria-label="Вперёд"></button>
           <p class="gv-scroll__hint">листайте вбок →</p>
         </div>
 
@@ -801,6 +806,28 @@ function initCarousel(root) {
   paint(false);   // стартовая позиция (первый реальный слайд) без анимации
   syncThumbs();
   start();
+}
+
+// Галерея-лента: кнопки листания по горизонтальному скроллу (с закольцовкой).
+function initGalleryScroll(g) {
+  const scroller = $(".gv-scroll", g);
+  const track = $(".gv-scroll__track", g);
+  if (!scroller || !track) return;
+  const stepPx = () => {
+    const slide = $(".gv-scroll__slide", track);
+    const gap = parseFloat(getComputedStyle(track).gap) || 16;
+    return slide ? slide.getBoundingClientRect().width + gap : scroller.clientWidth * 0.8;
+  };
+  const atEnd = () => scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 4;
+  const atStart = () => scroller.scrollLeft <= 4;
+  $(".gv-scroll__arrow.next", g)?.addEventListener("click", () => {
+    if (atEnd()) scroller.scrollTo({ left: 0, behavior: "smooth" });
+    else scroller.scrollBy({ left: stepPx(), behavior: "smooth" });
+  });
+  $(".gv-scroll__arrow.prev", g)?.addEventListener("click", () => {
+    if (atStart()) scroller.scrollTo({ left: scroller.scrollWidth, behavior: "smooth" });
+    else scroller.scrollBy({ left: -stepPx(), behavior: "smooth" });
+  });
 }
 
 /* ==========================================================================
@@ -1105,6 +1132,7 @@ function initUI() {
 
   $$("[data-carousel]").forEach(initCarousel);
   $$("[data-pcar]").forEach(initPosterCarousel);
+  $$(".gv-scroll-gallery").forEach(initGalleryScroll);
   initHeroFx();
   initCountdown();
   initMbar();
