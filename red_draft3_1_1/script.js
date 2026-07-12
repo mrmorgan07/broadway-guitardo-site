@@ -455,15 +455,14 @@ function posterCard(p, meta, attr) {
 // Фолбэк на спектакли (легаси), если расписание пустое.
 function renderAfisha(shows, spectacles = []) {
   const byId = Object.fromEntries((spectacles || []).map((p) => [p.id, p]));
-  let cardsArr;
-  if (Array.isArray(shows) && shows.length) {
-    cardsArr = shows
-      .map((s) => ({ s, p: byId[s.spectacleId] }))
-      .filter((x) => x.p)
-      .map(({ s, p }) => posterCard(p, s, `data-show="${esc(s.id)}"`));
-  } else {
-    cardsArr = (spectacles || []).map((p) => posterCard(p, p, `data-project="${esc(p.id)}"`));
-  }
+  const fromShows = (Array.isArray(shows) ? shows : [])
+    .map((s) => ({ s, p: byId[s.spectacleId] }))
+    .filter((x) => x.p)
+    .map(({ s, p }) => posterCard(p, s, `data-show="${esc(s.id)}"`));
+  // Фолбэк на спектакли, если расписание пусто или все показы «осиротели»
+  const cardsArr = fromShows.length
+    ? fromShows
+    : (spectacles || []).map((p) => posterCard(p, p, `data-project="${esc(p.id)}"`));
   const cards = cardsArr.join("");
   const count = cardsArr.length;
 

@@ -280,36 +280,15 @@ function openProjectEdit(id) {
             <input class="form-control" name="title" value="${esc(p.title)}" required>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Дата и время</label>
-            <input class="form-control" name="date" value="${esc(p.date)}" placeholder="15 ноября 2026, 19:00">
-          </div>
-          <div class="col-md-6">
             <label class="form-label">Тег</label>
             <input class="form-control" name="tag" value="${esc(p.tag)}">
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Длительность</label>
             <input class="form-control" name="duration" value="${esc(p.duration)}" placeholder="2 ч 30 мин">
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Стоимость от (₽)</label>
-            <input class="form-control" name="priceFrom" type="number" min="0" step="1" value="${esc(p.priceFrom ?? "")}" placeholder="1500">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Стоимость до (₽)</label>
-            <input class="form-control" name="priceTo" type="number" min="0" step="1" value="${esc(p.priceTo ?? "")}" placeholder="4000">
-          </div>
-          <div class="col-md-6">
-            <div class="form-check form-switch mt-md-4">
-              <input class="form-check-input" type="checkbox" role="switch" name="freeAdmission" id="freeAdmission" ${p.freeAdmission ? "checked" : ""}>
-              <label class="form-check-label" for="freeAdmission">Вход свободный <span class="text-secondary">(вместо стоимости)</span></label>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-check form-switch mt-md-4">
-              <input class="form-check-input" type="checkbox" role="switch" name="soldOut" id="soldOut" ${p.soldOut ? "checked" : ""}>
-              <label class="form-check-label" for="soldOut">Билетов больше нет</label>
-            </div>
+          <div class="col-12">
+            <div class="alert alert-secondary py-2 small mb-0">Дата, цена, билеты и состав задаются для каждого показа в разделе <b>«Афиша»</b>.</div>
           </div>
           <div class="col-12">
             <label class="form-label">Описание *</label>
@@ -339,10 +318,6 @@ function openProjectEdit(id) {
             <div id="castsList"></div>
             <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addCast">+ Состав</button>
             <div class="form-text">Роли — из списка выше. Солисты — из справочника «Солисты». В афише каждый показ выбирает один из составов.</div>
-          </div>
-          <div class="col-12">
-            <label class="form-label">Ссылка на билеты</label>
-            <input class="form-control" name="ticketLink" type="url" value="${esc(p.ticketLink)}">
           </div>
           <div class="col-12">
             <details class="adv-block">
@@ -407,74 +382,11 @@ function openProjectEdit(id) {
   };
 }
 
-// Привести солиста к объекту {name, role, photo} (поддержка старых строк "Имя — Роль")
-function normalizeSoloist(s) {
-  if (s && typeof s === "object") {
-    return { name: s.name || "", role: s.role || "", photo: s.photo || "" };
-  }
-  const parts = String(s || "").split(/\s+[—–-]\s+/);
-  return { name: (parts[0] || "").trim(), role: (parts[1] || "").trim(), photo: "" };
-}
-
 function mediaSrc(p) {
   if (!p) return "";
   return p.startsWith("/") || p.startsWith("http") ? p : "/uploads/" + p;
 }
 
-function soloistRow(s = {}) {
-  const photo = s.photo || "";
-  const src = mediaSrc(photo);
-  return `
-    <div class="soloist-row" data-soloist>
-      <div class="soloist-photo-box">
-        ${src
-          ? `<img class="soloist-thumb" src="${esc(src)}" alt="">`
-          : `<span class="soloist-thumb soloist-thumb--empty">нет фото</span>`}
-        <input type="hidden" class="soloist-photo" value="${esc(photo)}">
-        <input type="file" class="soloist-file" accept="image/*" hidden>
-        <button type="button" class="btn btn-outline-secondary btn-sm soloist-upload">📷 Фото</button>
-      </div>
-      <input class="form-control soloist-name" placeholder="Имя" value="${esc(s.name || "")}">
-      <input class="form-control soloist-role" placeholder="Роль" value="${esc(s.role || "")}">
-      <button type="button" class="btn btn-outline-danger btn-sm rm-soloist">✕</button>
-    </div>`;
-}
-
-function bindSoloistRow(row) {
-  row.querySelector(".rm-soloist").onclick = () => row.remove();
-
-  const fileInput = row.querySelector(".soloist-file");
-  row.querySelector(".soloist-upload").onclick = () => fileInput.click();
-
-  fileInput.onchange = async () => {
-    const f = fileInput.files[0];
-    if (!f) return;
-    try {
-      const r = await uploadFile(f);
-      row.querySelector(".soloist-photo").value = r.url;
-      const box = row.querySelector(".soloist-photo-box");
-      let img = box.querySelector("img.soloist-thumb");
-      if (!img) {
-        const empty = box.querySelector(".soloist-thumb--empty");
-        if (empty) empty.remove();
-        img = document.createElement("img");
-        img.className = "soloist-thumb";
-        box.prepend(img);
-      }
-      img.src = r.thumb || r.url;
-      toast("Фото солиста загружено");
-    } catch (e) {
-      toast(e.message, "error");
-    }
-    fileInput.value = "";
-  };
-}
-
-function renderSoloists(list) {
-  const el = document.getElementById("soloistsList");
-  el.innerHTML = list.map((s) => soloistRow(normalizeSoloist(s))).join("");
-  el.querySelectorAll("[data-soloist]").forEach(bindSoloistRow);
-}
 
 function renderGallerySortable(urls) {
   const list = document.getElementById("galleryList");
@@ -515,8 +427,8 @@ async function saveProject(gallery) {
   const f = document.getElementById("projectForm");
   const body = {
     title: f.title.value.trim(),
-    date: f.date.value.trim(),
     tag: f.tag.value.trim(),
+    duration: f.duration.value.trim(),
     description: f.description.value.trim(),
     poster: f.poster.value.trim() || document.getElementById("posterUrl").value,
     gallery: [...document.querySelectorAll("#galleryList [data-gallery-input]")].map((i) => i.value.trim()).filter(Boolean),
@@ -525,13 +437,7 @@ async function saveProject(gallery) {
       id: c.id,
       title: c.title.trim(),
       items: c.items.filter((it) => it.roleId || it.soloistId)
-    })).filter((c) => c.title || c.items.length),
-    ticketLink: f.ticketLink.value.trim(),
-    duration: f.duration.value.trim(),
-    priceFrom: f.priceFrom.value.trim(),
-    priceTo: f.priceTo.value.trim(),
-    freeAdmission: f.freeAdmission.checked,
-    soldOut: f.soldOut.checked
+    })).filter((c) => c.title || c.items.length)
   };
 
   if (!body.title || !body.description) return toast("Заполните обязательные поля", "error");
