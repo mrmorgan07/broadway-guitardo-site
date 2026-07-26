@@ -87,7 +87,7 @@ function soloistCard(s, extraClass = "") {
 
 // Бренд "Broadway Guitardo" → первое слово крупно (display), остальное — трекинг-капс
 function brandParts(name) {
-  const parts = (name || "Broadway Guitardo").trim().split(/\s+/);
+  const parts = (name || "Бродвей Гитардо").trim().split(/\s+/);
   const first = parts.shift() || "";
   return { first, rest: parts.join(" ") };
 }
@@ -669,7 +669,7 @@ function renderFooter(db) {
   const s = c.social || {};
   const brand = db.brand || {};
   const year = new Date().getFullYear();
-  const name = brand.name || "Broadway Guitardo";
+  const name = brand.name || "Бродвей Гитардо";
   const { first: footerFirst, rest: footerRest } = brandParts(name);
 
   const social = [
