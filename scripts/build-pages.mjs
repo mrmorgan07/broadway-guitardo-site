@@ -36,6 +36,22 @@ if (existsSync(rootIndex)) {
   console.log("✓ dist/index.html: пути ассетов → корень");
 }
 
+// Русская копия сайта под /rus: бренд «Бродвей Гитардо», пути ассетов → /rus/.
+// Корень / остаётся английским («Broadway Guitardo»), это отдельная копия.
+copyInto("red_draft3_1_1", "rus");
+const rusIndex = join(DIST, "rus", "index.html");
+if (existsSync(rusIndex)) {
+  const html = readFileSync(rusIndex, "utf8")
+    .replaceAll("/red_draft3_1_1/", "/rus/")
+    .replaceAll("Broadway <b>Guitardo</b>", "Бродвей <b>Гитардо</b>")
+    .replaceAll("Broadway Guitardo", "Бродвей Гитардо")
+    // Переопределяем data-бренд (hero/футер/логотип из /api/content) для /rus:
+    .replace('<script src="/rus/script.js',
+      '<script>window.__BRAND__ = "Бродвей Гитардо";</script>\n  <script src="/rus/script.js');
+  writeFileSync(rusIndex, html);
+  console.log("✓ dist/rus/index.html: бренд «Бродвей Гитардо», пути → /rus/");
+}
+
 // Шрифты макета лежат в соседней red_draft/fonts, а style.css ссылается на них
 // по абсолютному пути /red_draft/fonts/... — переносим, чтобы путь резолвился.
 copyInto("red_draft/fonts", "red_draft/fonts");

@@ -92,6 +92,13 @@ function brandParts(name) {
   return { first, rest: parts.join(" ") };
 }
 
+// Эффективное имя бренда: переопределение через window.__BRAND__ (используется
+// сборкой для /rus), иначе — из данных, иначе дефолт.
+function effectiveBrandName(db) {
+  if (typeof window !== "undefined" && window.__BRAND__) return window.__BRAND__;
+  return (db && db.brand && db.brand.name) || "Broadway Guitardo";
+}
+
 const QUOTE_DEFAULT = "Мы создаём мюзиклы, в которых зритель становится частью истории";
 const SLOGAN_DEFAULT = "Наши постановки — синтез мощного вокала, драматической игры и сценического волшебства";
 
@@ -120,7 +127,7 @@ function mainCastId(p) {
 function renderHero(db) {
   const hero = db.hero || {};
   const brand = db.brand || {};
-  const { first, rest } = brandParts(brand.name);
+  const { first, rest } = brandParts(effectiveBrandName(db));
   const bgVideo = hero.videoFile ? imgUrl(hero.videoFile) : null;
   const media = bgVideo
     ? `<video class="hero__bg hero__bg--video" autoplay muted loop playsinline poster="${esc(imgUrl(hero.background))}">
@@ -650,7 +657,7 @@ function renderLocation(loc = {}) {
 function renderInvite(db) {
   const invite = db.choirInvite || {};
   const brand = db.brand || {};
-  const { first, rest } = brandParts(brand.name);
+  const { first, rest } = brandParts(effectiveBrandName(db));
   return `
     <section class="invite" id="invite">
       <div class="container">
@@ -669,7 +676,7 @@ function renderFooter(db) {
   const s = c.social || {};
   const brand = db.brand || {};
   const year = new Date().getFullYear();
-  const name = brand.name || "Broadway Guitardo";
+  const name = effectiveBrandName(db);
   const { first: footerFirst, rest: footerRest } = brandParts(name);
 
   const social = [
@@ -1181,9 +1188,14 @@ async function boot() {
     return;
   }
 
-  if (DB.seo?.title) document.title = DB.seo.title;
-  if (DB.brand?.name) {
-    const { first, rest } = brandParts(DB.brand.name);
+  const brandOverride = (typeof window !== "undefined" && window.__BRAND__) || null;
+  if (DB.seo?.title) {
+    document.title = brandOverride
+      ? DB.seo.title.replace(/Broadway Guitardo/g, brandOverride)
+      : DB.seo.title;
+  }
+  if (brandOverride || DB.brand?.name) {
+    const { first, rest } = brandParts(effectiveBrandName(DB));
     $("#logo").innerHTML = `${esc(first)} <b>${esc(rest)}</b>`;
   }
 

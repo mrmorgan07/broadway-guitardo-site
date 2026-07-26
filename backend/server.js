@@ -85,6 +85,14 @@ async function kvSet(key, obj) {
   });
 }
 
+// S3-хранилище (Timeweb / любое S3-совместимое) — активно, если заданы переменные
+// окружения S3_*; иначе медиа хранится на локальном диске (как раньше).
+const { createStorage } = require("./storage");
+const storage = createStorage({ kvGet, kvSet });
+const useS3 = storage.enabled;
+if (useS3) console.log(`🗄  Медиа: S3 (${storage.cfg.endpoint}/${storage.cfg.bucket})`);
+else console.log("🗄  Медиа: локальный диск (uploads/)");
+
 // Инициализация: создаём таблицу и при первом запуске переносим данные из JSON-файлов.
 async function initStore() {
   // Локальный файл (вариант A): WAL + таймауты ради надёжности и конкурентных чтений.
@@ -216,7 +224,7 @@ function requireCsrf(req, res, next) {
 /* --- Загрузка файлов --- */
 
 // Multer для изображений (до 20 МБ → uploads/)
-const imageStorage = multer.diskStorage({
+const imageStorage = useS3 ? multer.memoryStorage() : multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
@@ -234,7 +242,7 @@ const uploadImage = multer({
 });
 
 // Multer для видео (до 500 МБ → uploads/videos/)
-const videoStorage = multer.diskStorage({
+const videoStorage = useS3 ? multer.memoryStorage() : multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, VIDEOS_DIR),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase() || ".mp4";
@@ -350,7 +358,11 @@ app.get("/api/content", (_req, res) => {
 // Express (Render) обрабатывает изображения на сервере (sharp) → ресайз на
 // клиенте не нужен, видео грузится напрямую.
 app.get("/api/capabilities", (_req, res) => {
-  res.json({ storage: "disk", clientResize: false, presignVideo: false });
+  res.json({
+    storage: useS3 ? "s3" : "disk",
+    clientResize: false,          // изображения оптимизируются на сервере (sharp)
+    presignVideo: useS3           // в S3-режиме видео грузится напрямую в бакет
+  });
 });
 
 /* --- Projects --- */
@@ -530,15 +542,57 @@ app.put("/api/auth/password", requireAuth, requireCsrf, async (req, res) => {
 
 /* --- Upload --- */
 
+// Обработка изображения из буфера (для S3): оптимизированный оригинал + превью.
+async function processImageBufferForS3(buffer, ext) {
+  const typeByExt = { ".png": "image/png", ".webp": "image/webp", ".avif": "image/avif", ".gif": "image/gif" };
+  const contentType = typeByExt[ext] || "image/jpeg";
+  let optimized;
+  if (ext === ".gif") {
+    optimized = buffer; // gif не трогаем — иначе сломаем анимацию
+  } else {
+    let pipe = sharp(buffer, { limitInputPixels: false }).rotate()
+      .resize(IMG_MAX_DIM, IMG_MAX_DIM, { fit: "inside", withoutEnlargement: true });
+    if (ext === ".png") pipe = pipe.png({ compressionLevel: 9 });
+    else if (ext === ".webp") pipe = pipe.webp({ quality: 82 });
+    else if (ext === ".avif") pipe = pipe.avif({ quality: 55 });
+    else pipe = pipe.jpeg({ quality: 82, mozjpeg: true });
+    optimized = await pipe.toBuffer();
+  }
+  const thumb = await sharp(buffer, { limitInputPixels: false })
+    .resize(400, 400, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 82 }).toBuffer();
+  return { optimized, thumb, contentType };
+}
+
 // Загрузка изображения (до 20 МБ)
 app.post("/api/upload", requireAuth, requireCsrf, (req, res) => {
   uploadImage.single("image")(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: "Файл не получен" });
 
-    const url = `/uploads/${req.file.filename}`;
+    if (useS3) {
+      try {
+        const folder = storage.sanitizeFolder(req.body.folder) || "photos";
+        const origExt = path.extname(req.file.originalname).toLowerCase();
+        const ext = [".png", ".webp", ".avif", ".gif"].includes(origExt) ? origExt : ".jpg";
+        const name = storage.genName(req.file.originalname, ext);
+        const key = `${folder}/${name}`;
+        const { optimized, thumb, contentType } = await processImageBufferForS3(req.file.buffer, ext);
+        const url = await storage.put(key, optimized, contentType);
+        const thumbUrl = await storage.put(`${folder}/thumb_${path.parse(name).name}.jpg`, thumb, "image/jpeg");
+        const item = {
+          filename: name, url, thumb: thumbUrl, type: "image", category: folder,
+          bytes: optimized.length, size: fmtSize(optimized.length), modified: new Date().toISOString()
+        };
+        await storage.addMedia(item);
+        return res.json({ url, thumb: thumbUrl, filename: name, size: item.size });
+      } catch (e) {
+        return res.status(500).json({ error: "Ошибка загрузки в S3: " + e.message });
+      }
+    }
 
-    // Оптимизируем оригинал (даунскейл + перекодирование), чтобы сайт грузился быстро
+    // Локальный диск
+    const url = `/uploads/${req.file.filename}`;
     let size = req.file.size;
     try {
       const newSize = await optimizeImage(req.file.filename);
@@ -552,15 +606,52 @@ app.post("/api/upload", requireAuth, requireCsrf, (req, res) => {
   });
 });
 
-// Загрузка видео (до 500 МБ) — поток с прогресс-заголовком
-app.post("/api/upload/video", requireAuth, requireCsrf, (req, res) => {
-  uploadVideo.single("video")(req, res, (err) => {
+// Загрузка видео (до 500 МБ)
+app.post("/api/upload/video", requireAuth, requireCsrf, async (req, res) => {
+  // S3-режим, presign: браузер грузит видео напрямую в бакет (в обход сервера)
+  if (useS3 && req.query.presign === "1") {
+    const { filename, contentType, size } = req.body || {};
+    if (!filename || !VIDEO_EXTS.test(filename)) return res.status(400).json({ error: "Некорректное имя видео" });
+    const key = `videos/${storage.genName(filename, ".mp4")}`;
+    try {
+      const uploadUrl = await storage.presignPut(key, contentType || "video/mp4");
+      return res.json({ uploadUrl, key, url: storage.publicUrl(key), size: fmtSize(size || 0) });
+    } catch (e) { return res.status(500).json({ error: "Ошибка presign: " + e.message }); }
+  }
+
+  // Иначе — обычная multipart-загрузка (диск, либо буфер → S3)
+  uploadVideo.single("video")(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: "Файл не получен" });
+
+    if (useS3) {
+      try {
+        const name = storage.genName(req.file.originalname, ".mp4");
+        const key = `videos/${name}`;
+        const url = await storage.put(key, req.file.buffer, req.file.mimetype || "video/mp4");
+        const item = {
+          filename: name, url, thumb: null, type: "video", category: "videos",
+          bytes: req.file.size, size: fmtSize(req.file.size), modified: new Date().toISOString()
+        };
+        await storage.addMedia(item);
+        return res.json({ url, filename: name, size: item.size });
+      } catch (e) { return res.status(500).json({ error: "Ошибка загрузки видео в S3: " + e.message }); }
+    }
 
     const url = `/uploads/videos/${req.file.filename}`;
     res.json({ url, filename: req.file.filename, size: fmtSize(req.file.size) });
   });
+});
+
+// Регистрация видео в индексе после прямой (presigned) загрузки в S3.
+app.post("/api/upload/video/complete", requireAuth, requireCsrf, async (req, res) => {
+  const { key, url, size } = req.body || {};
+  if (!key || !url) return res.status(400).json({ error: "Нет данных о загрузке" });
+  await storage.addMedia({
+    filename: (key.split("/").pop() || key), url, thumb: null, type: "video", category: "videos",
+    bytes: size || 0, size: fmtSize(size || 0), modified: new Date().toISOString()
+  });
+  res.json({ ok: true, url });
 });
 
 /* --- Медиатека --- */
@@ -568,7 +659,15 @@ app.post("/api/upload/video", requireAuth, requireCsrf, (req, res) => {
 // GET /api/media — список всех загруженных файлов (фото + видео)
 // Публичный список всех фото из папки uploads (для галереи на сайте).
 // Берём только файлы верхнего уровня — папки thumbs/ и videos/ исключаются автоматически.
-app.get("/api/gallery/photos", (_req, res) => {
+app.get("/api/gallery/photos", async (_req, res) => {
+  if (useS3) {
+    try {
+      const photos = (await storage.readMedia())
+        .filter((m) => m.type === "image" && m.category === "gallery")
+        .map((m) => m.url);
+      return res.json({ photos });
+    } catch { return res.json({ photos: [] }); }
+  }
   try {
     if (!fs.existsSync(UPLOADS_DIR)) return res.json({ photos: [] });
     const photos = fs.readdirSync(UPLOADS_DIR)
@@ -586,7 +685,13 @@ app.get("/api/gallery/photos", (_req, res) => {
   }
 });
 
-app.get("/api/media", requireAuth, (_req, res) => {
+app.get("/api/media", requireAuth, async (_req, res) => {
+  if (useS3) {
+    const all = await storage.readMedia();
+    const images = all.filter((m) => m.type === "image");
+    const videos = all.filter((m) => m.type === "video");
+    return res.json({ images, videos, total: images.length + videos.length });
+  }
   function listDir(dir, urlPrefix, typeFilter) {
     if (!fs.existsSync(dir)) return [];
     return fs.readdirSync(dir)
@@ -620,40 +725,47 @@ app.get("/api/media", requireAuth, (_req, res) => {
 });
 
 // DELETE /api/media/:type/:filename — удалить файл
-app.delete("/api/media/:type/:filename", requireAuth, requireCsrf, (req, res) => {
+app.delete("/api/media/:type/:filename", requireAuth, requireCsrf, async (req, res) => {
   const { type, filename } = req.params;
 
   // Защита от path traversal
   if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
     return res.status(400).json({ error: "Недопустимое имя файла" });
   }
-
-  let filePath;
-  if (type === "video") {
-    filePath = path.join(VIDEOS_DIR, filename);
-  } else if (type === "image") {
-    filePath = path.join(UPLOADS_DIR, filename);
-    // Удалить превью если есть
-    const thumbPath = path.join(THUMBS_DIR, `thumb_${path.parse(filename).name}.jpg`);
-    if (fs.existsSync(thumbPath)) fs.unlinkSync(thumbPath);
-  } else {
+  if (type !== "image" && type !== "video") {
     return res.status(400).json({ error: "Неверный тип файла" });
   }
-
-  if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Файл не найден" });
 
   // Защита от удаления используемого файла: ищем имя файла в контенте.
   // Перекрыть можно явным ?force=1 (пользователь подтвердил в админке).
   if (req.query.force !== "1") {
     const dbStr = JSON.stringify(readDb());
     if (dbStr.includes(filename)) {
-      return res.status(409).json({
-        error: "Файл используется в контенте сайта",
-        inUse: true
-      });
+      return res.status(409).json({ error: "Файл используется в контенте сайта", inUse: true });
     }
   }
 
+  if (useS3) {
+    try {
+      const item = (await storage.readMedia()).find((m) => m.filename === filename && m.type === type);
+      if (!item) return res.status(404).json({ error: "Файл не найден" });
+      await storage.del(storage.keyFromUrl(item.url));
+      if (item.thumb) await storage.del(storage.keyFromUrl(item.thumb));
+      await storage.removeMediaByUrl(item.url);
+      return res.json({ ok: true });
+    } catch (e) { return res.status(500).json({ error: "Ошибка удаления: " + e.message }); }
+  }
+
+  // Локальный диск
+  let filePath;
+  if (type === "video") {
+    filePath = path.join(VIDEOS_DIR, filename);
+  } else {
+    filePath = path.join(UPLOADS_DIR, filename);
+    const thumbPath = path.join(THUMBS_DIR, `thumb_${path.parse(filename).name}.jpg`);
+    if (fs.existsSync(thumbPath)) fs.unlinkSync(thumbPath);
+  }
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Файл не найден" });
   fs.unlinkSync(filePath);
   res.json({ ok: true });
 });
