@@ -1112,6 +1112,7 @@ async function renderGallery() {
 
 function renderHeroSection() {
   const h = db.hero || {};
+  const mediaType = h.mediaType || (h.videoFile ? "video" : "photo");
   const el = document.getElementById("viewHero");
   el.innerHTML = `
     <h2 class="mb-4" style="font-family:var(--font-heading)">Главный экран (Hero)</h2>
@@ -1130,6 +1131,17 @@ function renderHeroSection() {
         <input class="form-control" name="subtitle" value="${esc(h.subtitle)}">
       </div>
       <div class="col-12">
+        <label class="form-label d-block">Фон Hero — что показывать</label>
+        <div class="btn-group" role="group">
+          <input type="radio" class="btn-check" name="mediaType" id="mtPhoto" value="photo" ${mediaType === "photo" ? "checked" : ""}>
+          <label class="btn btn-outline-light" for="mtPhoto">🖼 Фото</label>
+          <input type="radio" class="btn-check" name="mediaType" id="mtVideo" value="video" ${mediaType === "video" ? "checked" : ""}>
+          <label class="btn btn-outline-warning" for="mtVideo">🎥 Видео</label>
+        </div>
+        <div class="form-text">Переключает фон главного экрана. Файлы обоих типов сохраняются — можно вернуть обратно.</div>
+      </div>
+
+      <div class="col-12" id="heroBgBlock">
         <label class="form-label">Фоновое изображение</label>
         <div class="input-group">
           <input class="form-control" name="background" id="heroBgInput" value="${esc(h.background)}" placeholder="https://... или /uploads/файл.jpg">
@@ -1149,7 +1161,7 @@ function renderHeroSection() {
 
       <div class="col-12"><hr class="border-secondary"></div>
 
-      <div class="col-12">
+      <div class="col-12" id="heroVideoBlock">
         <label class="form-label d-flex align-items-center gap-2">
           🎥 Фоновое видео (локальный файл)
           <span class="badge bg-warning text-dark">Новое</span>
@@ -1197,6 +1209,17 @@ function renderHeroSection() {
         <button type="submit" class="btn btn-gold">Сохранить</button>
       </div>
     </div></form>`;
+
+  // Тумблер «фото / видео»: показываем нужный блок загрузки
+  function updateHeroMediaToggle() {
+    const t = document.querySelector('input[name="mediaType"]:checked')?.value || "photo";
+    const bg = document.getElementById("heroBgBlock");
+    const vid = document.getElementById("heroVideoBlock");
+    if (bg) bg.style.display = t === "video" ? "none" : "";
+    if (vid) vid.style.display = t === "video" ? "" : "none";
+  }
+  document.querySelectorAll('input[name="mediaType"]').forEach((r) => r.addEventListener("change", updateHeroMediaToggle));
+  updateHeroMediaToggle();
 
   // Загрузка фонового изображения
   document.getElementById("heroBgUpload").addEventListener("change", async (e) => {

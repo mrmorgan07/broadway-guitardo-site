@@ -128,7 +128,10 @@ function renderHero(db) {
   const hero = db.hero || {};
   const brand = db.brand || {};
   const { first, rest } = brandParts(effectiveBrandName(db));
-  const bgVideo = hero.videoFile ? imgUrl(hero.videoFile) : null;
+  // Тумблер фон: mediaType "photo"|"video". Обратная совместимость: если не задан —
+  // показываем видео, когда файл есть (прежнее поведение).
+  const wantVideo = hero.mediaType ? hero.mediaType === "video" : !!hero.videoFile;
+  const bgVideo = (wantVideo && hero.videoFile) ? imgUrl(hero.videoFile) : null;
   const media = bgVideo
     ? `<video class="hero__bg hero__bg--video" autoplay muted loop playsinline poster="${esc(imgUrl(hero.background))}">
          <source src="${esc(bgVideo)}" type="${videoType(bgVideo)}">
