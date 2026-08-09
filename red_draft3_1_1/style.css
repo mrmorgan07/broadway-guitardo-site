@@ -357,7 +357,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   inset: 0;
   z-index: 1;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(120, 6, 6, 0.35) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(120, 6, 6, 0.18) 0%, transparent 70%),
     linear-gradient(180deg, rgba(10, 8, 9, 0.38) 0%, rgba(10, 8, 9, 0.18) 45%, rgba(10, 8, 9, 0.9) 100%);
 }
 
