@@ -124,8 +124,11 @@ function escMultiline(s) { return esc(s).replace(/\n/g, "<br>"); }
 /* --- Состояние --- */
 let DB = null;
 
+// Спектакль показывается на сайте, если не выключен тумблером «Активен».
+const isActive = (p) => !!p && p.active !== false;
+
 function featuredProject(db) {
-  const projects = db.projects || [];
+  const projects = (db.projects || []).filter(isActive);
   if (!projects.length) return null;
   const heroTitle = (db.hero?.title || "").trim().toLowerCase();
   return projects.find((x) => (x.title || "").trim().toLowerCase() === heroTitle) || projects[0];
@@ -135,7 +138,7 @@ function featuredProject(db) {
 // из афиши (shows). Фолбэк — дата самого спектакля (легаси).
 function heroDeadline(db) {
   const projects = db.projects || [];
-  const target = projects.find((p) => /бал\s*вампир/i.test(p.title || "")) || featuredProject(db);
+  const target = projects.filter(isActive).find((p) => /бал\s*вампир/i.test(p.title || "")) || featuredProject(db);
   if (!target) return null;
   const now = Date.now();
   const future = (db.shows || [])
@@ -520,13 +523,13 @@ function renderAfisha(shows, spectacles = []) {
   const byId = Object.fromEntries((spectacles || []).map((p) => [p.id, p]));
   const fromShows = (Array.isArray(shows) ? shows : [])
     .map((s) => ({ s, p: byId[s.spectacleId] }))
-    .filter((x) => x.p)
+    .filter((x) => isActive(x.p))
     .sort((a, b) => showTime(a.s) - showTime(b.s))
     .map(({ s, p }) => posterCard(p, s, `data-show="${esc(s.id)}"`));
   // Фолбэк на спектакли, если расписание пусто или все показы «осиротели»
   const cardsArr = fromShows.length
     ? fromShows
-    : (spectacles || []).map((p) => posterCard(p, p, `data-project="${esc(p.id)}"`));
+    : (spectacles || []).filter(isActive).map((p) => posterCard(p, p, `data-project="${esc(p.id)}"`));
   const cards = cardsArr.join("");
   const count = cardsArr.length;
 
@@ -972,7 +975,7 @@ function openProject(id, castId, show) {
     <div class="carousel__thumb${i === 0 ? " active" : ""}"><img src="${esc(imgUrl(src))}" alt="" loading="lazy"></div>`).join("");
 
   const others = (DB.projects || [])
-    .filter((x) => x.id !== id)
+    .filter((x) => x.id !== id && isActive(x))
     .slice(0, 3)
     .map((x) => `
       <a class="mini-card" data-project="${esc(x.id)}">

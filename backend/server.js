@@ -404,7 +404,8 @@ app.post("/api/projects", requireAuth, requireCsrf, async (req, res) => {
     priceFrom: body.priceFrom ?? "",
     priceTo: body.priceTo ?? "",
     freeAdmission: !!body.freeAdmission,
-    soldOut: !!body.soldOut
+    soldOut: !!body.soldOut,
+    active: body.active !== false
   };
 
   db.projects.push(project);
