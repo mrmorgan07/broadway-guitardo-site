@@ -150,7 +150,7 @@ for (const key of ["soloists", "shows"]) {
 const SECTION_KEY: Record<string, string> = {
   about: "about", director: "artisticDirector", concertmaster: "concertmaster",
   choir: "choirInvite", contacts: "contacts", hero: "hero",
-  location: "location", gallery: "gallery",
+  location: "location", gallery: "gallery", texts: "texts",
 };
 
 app.get("/:section", async (c, next) => {

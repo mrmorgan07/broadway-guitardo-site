@@ -150,6 +150,7 @@ function showView(name) {
     soloists: "viewSoloists",
     afisha: "viewAfisha",
     hero: "viewHero",
+    texts: "viewTexts",
     about: "viewAbout",
     director: "viewDirector",
     concertmaster: "viewConcertmaster",
@@ -175,6 +176,7 @@ document.getElementById("sideNav").addEventListener("click", (e) => {
   if (btn.dataset.view === "soloists") renderSoloistsRegistry();
   if (btn.dataset.view === "afisha") renderAfisha();
   if (btn.dataset.view === "hero") renderHeroSection();
+  if (btn.dataset.view === "texts") renderTexts();
   if (btn.dataset.view === "about") renderAbout();
   if (btn.dataset.view === "director") renderDirector();
   if (btn.dataset.view === "concertmaster") renderConcertmaster();
@@ -1127,10 +1129,6 @@ function renderHeroSection() {
         <input class="form-control" name="title" value="${esc(h.title)}">
       </div>
       <div class="col-12">
-        <label class="form-label">Подзаголовок</label>
-        <input class="form-control" name="subtitle" value="${esc(h.subtitle)}">
-      </div>
-      <div class="col-12">
         <label class="form-label d-block">Фон Hero — что показывать</label>
         <div class="btn-group" role="group">
           <input type="radio" class="btn-check" name="mediaType" id="mtPhoto" value="photo" ${mediaType === "photo" ? "checked" : ""}>
@@ -1273,6 +1271,47 @@ function renderHeroSection() {
     try {
       db.hero = await api("/api/hero", { method: "PUT", body: JSON.stringify(body) });
       toast("Главный экран сохранён");
+    } catch (err) { toast(err.message, "error"); }
+  };
+}
+
+function renderTexts() {
+  const t = db.texts || {};
+  const FIELDS = [
+    { key: "heroSubtitle", label: "Hero — подзаголовок (можно несколько строк)", area: true, def: "Мюзикл — наша мечта с афиши.\nЭто мечта, которую мы воплотили на сцене." },
+    { key: "aboutEyebrow", label: "«О коллективе» — надзаголовок", def: "О коллективе" },
+    { key: "aboutTitle", label: "«О коллективе» — заголовок", def: "Магия рождается из полумрака" },
+    { key: "quote", label: "Цитата (ступенчатый блок, несколько строк)", area: true, def: "Разные профессии.\nОдна любовь —\nк музыке и к сцене." },
+    { key: "leadersEyebrow", label: "«Лица коллектива» — надзаголовок", def: "Лица коллектива" },
+    { key: "afishaTitle", label: "Афиша — заголовок", def: "Афиша" },
+    { key: "featureEyebrow", label: "Текущий спектакль — надзаголовок", def: "Текущий проект" },
+    { key: "galleryPhrase", label: "Галерея — фраза у 3 фото (можно несколько строк)", area: true, def: "Мы очень разные, но на сцене мы — единый организм" },
+    { key: "locationEyebrow", label: "Локация — надзаголовок", def: "Локация" },
+    { key: "inviteEyebrow", label: "Приглашение — надзаголовок", def: "Присоединяйтесь" },
+    { key: "inviteTitle", label: "Приглашение — заголовок (перед названием бренда)", def: "Стать участником" }
+  ];
+  const val = (f) => (t[f.key] != null ? t[f.key] : f.def);
+  document.getElementById("viewTexts").innerHTML = `
+    <h2 class="mb-2" style="font-family:var(--font-heading)">Тексты и заголовки</h2>
+    <p class="text-muted small mb-4">Заголовки и надписи секций лендинга. В многострочных полях перенос строки = новая строка на сайте.</p>
+    <form id="textsForm" class="card bg-dark border-secondary"><div class="card-body row g-3">
+      ${FIELDS.map((f) => `
+        <div class="col-md-6">
+          <label class="form-label">${f.label}</label>
+          ${f.area
+            ? `<textarea class="form-control" data-tkey="${f.key}" rows="3" placeholder="${esc(f.def)}">${esc(val(f))}</textarea>`
+            : `<input class="form-control" data-tkey="${f.key}" value="${esc(val(f))}" placeholder="${esc(f.def)}">`}
+        </div>`).join("")}
+      <div class="col-12"><button type="submit" class="btn btn-gold">Сохранить</button></div>
+    </div></form>`;
+
+  document.getElementById("textsForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const body = {};
+    document.querySelectorAll("#textsForm [data-tkey]").forEach((el) => { body[el.dataset.tkey] = el.value; });
+    try {
+      db.texts = await api("/api/texts", { method: "PUT", body: JSON.stringify(body) });
+      toast("Тексты сохранены");
     } catch (err) { toast(err.message, "error"); }
   };
 }
