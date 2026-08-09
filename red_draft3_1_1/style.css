@@ -265,13 +265,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   86% {
-    text-shadow: 0 0 8px #fff4ec, 0 0 20px rgba(var(--red-bright-rgb), 0.95), 0 1px 14px rgba(0, 0, 0, 0.55);
+    text-shadow: 0 0 6px #ffcabf, 0 0 20px rgba(230, 18, 28, 1), 0 0 40px rgba(230, 18, 28, 0.75), 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   89% {
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   93% {
-    text-shadow: 0 0 10px #ffffff, 0 0 30px rgba(var(--cta-rgb), 0.95), 0 0 46px rgba(var(--red-bright-rgb), 0.6), 0 1px 14px rgba(0, 0, 0, 0.55);
+    text-shadow: 0 0 8px #ffd3c8, 0 0 32px rgba(235, 12, 22, 1), 0 0 58px rgba(235, 12, 22, 0.85), 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   97% {
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
@@ -1123,7 +1123,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 
 .gcm__phrase {
   font-family: var(--font-display);
-  font-size: clamp(1.4rem, 2.8vw, 3.2rem);
+  font-size: clamp(1.9rem, 4.2vw, 4.6rem);
   line-height: 1.06;
   text-transform: uppercase;
   color: var(--red);

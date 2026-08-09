@@ -452,7 +452,8 @@ function sectionRoutes(sectionKey) {
       contacts: db.contacts,
       hero: db.hero,
       location: db.location,
-      gallery: db.gallery
+      gallery: db.gallery,
+      texts: db.texts
     };
     res.json(map[sectionKey] ?? {});
   });
@@ -467,7 +468,8 @@ function sectionRoutes(sectionKey) {
       contacts: "contacts",
       hero: "hero",
       location: "location",
-      gallery: "gallery"
+      gallery: "gallery",
+      texts: "texts"
     };
     const dbKey = keyMap[sectionKey];
     db[dbKey] = { ...db[dbKey], ...req.body };
@@ -476,7 +478,7 @@ function sectionRoutes(sectionKey) {
   });
 }
 
-["about", "director", "concertmaster", "choir", "contacts", "hero", "location", "gallery"].forEach(sectionRoutes);
+["about", "director", "concertmaster", "choir", "contacts", "hero", "location", "gallery", "texts"].forEach(sectionRoutes);
 
 /* --- Глобальный справочник солистов (роли живут внутри спектакля) --- */
 function registryRoutes(key) {

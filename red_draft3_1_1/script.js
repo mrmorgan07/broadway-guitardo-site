@@ -99,8 +99,27 @@ function effectiveBrandName(db) {
   return (db && db.brand && db.brand.name) || "Broadway Guitardo";
 }
 
-const QUOTE_DEFAULT = "Разные профессии.\nОдна любовь —\nк музыке и к сцене.";
-const SLOGAN_DEFAULT = "Мы очень разные, но на сцене мы — единый организм";
+// Заголовки/надписи секций — редактируются в админке (db.texts), с дефолтами.
+const TEXT_DEFAULTS = {
+  heroSubtitle: "Мюзикл — наша мечта с афиши.\nЭто мечта, которую мы воплотили на сцене.",
+  aboutEyebrow: "О коллективе",
+  aboutTitle: "Магия рождается из полумрака",
+  quote: "Разные профессии.\nОдна любовь —\nк музыке и к сцене.",
+  leadersEyebrow: "Лица коллектива",
+  afishaTitle: "Афиша",
+  featureEyebrow: "Текущий проект",
+  galleryPhrase: "Мы очень разные, но на сцене мы — единый организм",
+  locationEyebrow: "Локация",
+  inviteEyebrow: "Присоединяйтесь",
+  inviteTitle: "Стать участником"
+};
+// Значение текста из данных (DB.texts) или дефолт. Пустая строка — валидна (скрыть).
+function txt(key) {
+  const v = DB && DB.texts ? DB.texts[key] : undefined;
+  return (v === undefined || v === null) ? (TEXT_DEFAULTS[key] ?? "") : v;
+}
+// Экранирование + переносы строк (\n) → <br>
+function escMultiline(s) { return esc(s).replace(/\n/g, "<br>"); }
 
 /* --- Состояние --- */
 let DB = null;
@@ -155,9 +174,7 @@ function renderHero(db) {
     : `<div class="hero__bg" style="background-image:url('${esc(imgUrl(hero.background))}')"></div>`;
 
   const hasTrailer = !!(hero.trailerFile || hero.videoTrailerUrl);
-  const sub = brand.tagline
-    ? "Мюзикл — наша мечта с афиши.<br>Это мечта, которую мы воплотили на сцене."
-    : esc(hero.subtitle);
+  const sub = escMultiline(txt("heroSubtitle"));
 
   // Обратный отсчёт до ближайшего показа «Бал Вампиров» из афиши
   const hd = heroDeadline(db);
@@ -388,8 +405,8 @@ function renderAbout(about = {}) {
         <div class="about__grid">
           ${photoBlock}
           <div class="about__body reveal d1">
-            <p class="section-eyebrow">О коллективе</p>
-            <h2 class="section-title">Магия рождается из полумрака</h2>
+            <p class="section-eyebrow">${esc(txt("aboutEyebrow"))}</p>
+            <h2 class="section-title">${esc(txt("aboutTitle"))}</h2>
             <p>${esc(about.text)}</p>
             <div class="about__rule" aria-hidden="true"></div>
           </div>
@@ -458,7 +475,7 @@ function renderLeaders(db) {
   return `
     <section class="section" id="leaders">
       <div class="container">
-        <p class="section-eyebrow reveal">Лица коллектива</p>
+        <p class="section-eyebrow reveal">${esc(txt("leadersEyebrow"))}</p>
         <div class="leaders__grid">
           ${leaderCard(db.artisticDirector, "Художественный руководитель", "")}
           ${leaderCard(db.concertmaster, "Концертмейстер", "d1")}
@@ -520,7 +537,7 @@ function renderAfisha(shows, spectacles = []) {
   return `
     <section class="section" id="afisha">
       <div class="container">
-        <h2 class="section-title section-title--red afisha-title reveal">Афиша</h2>
+        <h2 class="section-title section-title--red afisha-title reveal">${esc(txt("afishaTitle"))}</h2>
         <div class="pcar reveal" data-pcar>
           <div class="pcar__track">${cards}</div>
           <button class="pcar__arrow pcar__arrow--prev" aria-label="Назад"></button>
@@ -563,7 +580,7 @@ function renderFeature(db) {
         </div>
 
         <div class="feature__cta reveal">
-          <p class="section-eyebrow">Текущий проект</p>
+          <p class="section-eyebrow">${esc(txt("featureEyebrow"))}</p>
           <p class="feature__cta-desc">${esc(p.description)}</p>
           <div class="hero__actions" style="justify-content:center">
             <button class="btn btn-secondary" data-project="${esc(p.id)}" data-cast="${esc(mainCastId(p))}">О спектакле</button>
@@ -608,7 +625,7 @@ function renderGalleryMosaic(db, sloganText, uploadsPhotos) {
         <!-- Асимметричная мозаика: текст + 3 фото -->
         <div class="gcm-hero reveal">
           <div class="gcm-hero__text">
-            <p class="gcm__phrase">${esc(sloganText)}</p>
+            <p class="gcm__phrase">${escMultiline(txt("galleryPhrase"))}</p>
           </div>
           ${stat[0] ? `<div class="gcm__photo gcm__photo--0"><img src="${esc(stat[0])}" alt="" loading="lazy"></div>` : ""}
           ${stat[1] ? `<div class="gcm__photo gcm__photo--1"><img src="${esc(stat[1])}" alt="" loading="lazy"></div>` : ""}
@@ -658,7 +675,7 @@ function renderLocation(loc = {}) {
   return `
     <section class="section location" id="location">
       <div class="container">
-        <p class="section-eyebrow reveal">Локация</p>
+        <p class="section-eyebrow reveal">${esc(txt("locationEyebrow"))}</p>
         <h2 class="section-title reveal">${esc(loc.title || "Как добраться")}</h2>
         <hr class="rule reveal">
         <div class="location__grid">
@@ -683,8 +700,8 @@ function renderInvite(db) {
     <section class="invite" id="invite">
       <div class="container">
         <div class="invite__card reveal">
-          <p class="invite__eyebrow">Присоединяйтесь</p>
-          <h2 class="invite__title">Стать участником<br>${esc(first)} ${esc(rest)}</h2>
+          <p class="invite__eyebrow">${esc(txt("inviteEyebrow"))}</p>
+          <h2 class="invite__title">${esc(txt("inviteTitle"))}<br>${esc(first)} ${esc(rest)}</h2>
           <p class="invite__text">${esc(invite.text)}</p>
           ${invite.link ? `<a href="${esc(invite.link)}" class="btn btn-dark" target="_blank" rel="noopener noreferrer">Записаться в хор</a>` : ""}
         </div>
@@ -1220,7 +1237,7 @@ async function boot() {
     $("#logo").innerHTML = `${esc(first)} <b>${esc(rest)}</b>`;
   }
 
-  const quote = DB.about?.quote || QUOTE_DEFAULT;
+  const quote = txt("quote");
 
   // Все фото из папки uploads — для карусели галереи
   let uploadsPhotos = [];
@@ -1236,7 +1253,7 @@ async function boot() {
     renderLeaders(DB) +
     renderAfisha(DB.shows, DB.projects) +
     renderFeature(DB) +
-    renderGalleryMosaic(DB, SLOGAN_DEFAULT, uploadsPhotos) +
+    renderGalleryMosaic(DB, null, uploadsPhotos) +
     renderInvite(DB) +
     renderLocation(DB.location);
 
