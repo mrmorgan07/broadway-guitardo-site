@@ -99,8 +99,8 @@ function effectiveBrandName(db) {
   return (db && db.brand && db.brand.name) || "Broadway Guitardo";
 }
 
-const QUOTE_DEFAULT = "Мы создаём мюзиклы, в которых зритель становится частью истории";
-const SLOGAN_DEFAULT = "Наши постановки — синтез мощного вокала, драматической игры и сценического волшебства";
+const QUOTE_DEFAULT = "Разные профессии.\nОдна любовь —\nк музыке и к сцене.";
+const SLOGAN_DEFAULT = "Мы очень разные, но на сцене мы — единый организм";
 
 /* --- Состояние --- */
 let DB = null;
@@ -156,7 +156,7 @@ function renderHero(db) {
 
   const hasTrailer = !!(hero.trailerFile || hero.videoTrailerUrl);
   const sub = brand.tagline
-    ? "Место, где музыка, сцена и атмосфера<br>объединяются в полноценный опыт"
+    ? "Мюзикл — наша мечта с афиши.<br>Это мечта, которую мы воплотили на сцене."
     : esc(hero.subtitle);
 
   // Обратный отсчёт до ближайшего показа «Бал Вампиров» из афиши
@@ -400,7 +400,10 @@ function renderAbout(about = {}) {
 
 // Разбить слова ровно на N строк (остаток — к первым строкам)
 function splitIntoLines(text, n) {
-  const words = String(text).trim().split(/\s+/);
+  const raw = String(text).trim();
+  // Явные переносы строк (\n) имеют приоритет над авто-разбиением по словам
+  if (raw.includes("\n")) return raw.split("\n").map((s) => s.trim()).filter(Boolean);
+  const words = raw.split(/\s+/);
   n = Math.min(n, words.length) || 1;
   const base = Math.floor(words.length / n);
   const sizes = new Array(n).fill(base);
