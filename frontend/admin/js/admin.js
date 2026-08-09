@@ -240,7 +240,7 @@ function renderProjectsList() {
   list.innerHTML = (db.projects || []).map((p) => `
     <div class="proj-card">
       <div class="proj-card__main">
-        <div class="proj-card__title">${esc(p.title)}</div>
+        <div class="proj-card__title">${esc(p.title)}${p.active === false ? ` <span class="badge bg-danger">скрыт</span>` : ""}</div>
         <div class="proj-card__meta">
           ${p.date ? `<span>${esc(p.date)}</span>` : ""}
           ${p.tag ? `<span class="badge bg-secondary">${esc(p.tag)}</span>` : ""}
@@ -265,7 +265,7 @@ function openProjectEdit(id) {
   editingProjectId = id;
   const p = id ? db.projects.find((x) => x.id === id) : {
     id: "", title: "", date: "", tag: "", description: "", poster: "", gallery: [], soloists: [], ticketLink: "",
-    duration: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false
+    duration: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, active: true
   };
   showView("projectEdit");
 
@@ -280,6 +280,12 @@ function openProjectEdit(id) {
           <div class="col-12">
             <label class="form-label">Название *</label>
             <input class="form-control" name="title" value="${esc(p.title)}" required>
+          </div>
+          <div class="col-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" name="active" id="projActive" ${p.active !== false ? "checked" : ""}>
+              <label class="form-check-label" for="projActive">Активен <span class="text-secondary">(выключи, чтобы скрыть спектакль и его показы с сайта)</span></label>
+            </div>
           </div>
           <div class="col-md-6">
             <label class="form-label">Тег</label>
@@ -429,6 +435,7 @@ async function saveProject(gallery) {
   const f = document.getElementById("projectForm");
   const body = {
     title: f.title.value.trim(),
+    active: f.active.checked,
     tag: f.tag.value.trim(),
     duration: f.duration.value.trim(),
     description: f.description.value.trim(),

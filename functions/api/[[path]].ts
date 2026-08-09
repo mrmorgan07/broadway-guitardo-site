@@ -101,6 +101,7 @@ app.post("/projects", requireAuth, requireCsrf, async (c) => {
     priceTo: body.priceTo ?? "",
     freeAdmission: !!body.freeAdmission,
     soldOut: !!body.soldOut,
+    active: body.active !== false,
   };
   db.projects.push(project);
   await writeContent(c.env, db);
