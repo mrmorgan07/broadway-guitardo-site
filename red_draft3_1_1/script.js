@@ -112,6 +112,22 @@ function featuredProject(db) {
   return projects.find((x) => (x.title || "").trim().toLowerCase() === heroTitle) || projects[0];
 }
 
+// Дедлайн обратного отсчёта: ближайший будущий показ спектакля «Бал Вампиров»
+// из афиши (shows). Фолбэк — дата самого спектакля (легаси).
+function heroDeadline(db) {
+  const projects = db.projects || [];
+  const target = projects.find((p) => /бал\s*вампир/i.test(p.title || "")) || featuredProject(db);
+  if (!target) return null;
+  const now = Date.now();
+  const future = (db.shows || [])
+    .filter((s) => s.spectacleId === target.id)
+    .map(showTime)
+    .filter((t) => isFinite(t) && t >= now)
+    .sort((a, b) => a - b);
+  const deadline = future.length ? new Date(future[0]) : parseRuDate(target.date);
+  return deadline ? { deadline, title: target.title } : null;
+}
+
 // «Основной состав» спектакля: состав с названием, содержащим «основ», иначе первый.
 function mainCastId(p) {
   const casts = Array.isArray(p && p.casts) ? p.casts : [];
@@ -143,18 +159,17 @@ function renderHero(db) {
     ? "Место, где музыка, сцена и атмосфера<br>объединяются в полноценный опыт"
     : esc(hero.subtitle);
 
-  // Дата премьеры для обратного отсчёта — из текущего (featured) спектакля
-  const featured = featuredProject(db);
-  const deadline = parseRuDate(featured?.date);
-  const countdown = deadline
-    ? `<div class="countdown" id="countdown" data-deadline="${deadline.toISOString()}" aria-label="До премьеры">
+  // Обратный отсчёт до ближайшего показа «Бал Вампиров» из афиши
+  const hd = heroDeadline(db);
+  const countdown = hd
+    ? `<div class="countdown" id="countdown" data-deadline="${hd.deadline.toISOString()}" aria-label="До премьеры">
          <div class="countdown__unit"><span class="countdown__num" data-cd="days">--</span><span class="countdown__label">дней</span></div>
          <span class="countdown__sep">:</span>
          <div class="countdown__unit"><span class="countdown__num" data-cd="hours">--</span><span class="countdown__label">часов</span></div>
          <span class="countdown__sep">:</span>
          <div class="countdown__unit"><span class="countdown__num" data-cd="mins">--</span><span class="countdown__label">минут</span></div>
        </div>
-       <p class="countdown__caption">до премьеры «${esc(featured?.title || "")}»</p>`
+       <p class="countdown__caption">до премьеры<br><span class="countdown__show">«${esc(hd.title)}»</span></p>`
     : "";
 
   return `
