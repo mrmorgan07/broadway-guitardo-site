@@ -265,13 +265,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   86% {
-    text-shadow: 0 0 8px #fff4ec, 0 0 20px rgba(var(--red-bright-rgb), 0.95), 0 1px 14px rgba(0, 0, 0, 0.55);
+    text-shadow: 0 0 6px #ffd7cc, 0 0 22px rgba(var(--red-bright-rgb), 1), 0 0 40px rgba(var(--red-bright-rgb), 0.7), 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   89% {
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   93% {
-    text-shadow: 0 0 10px #ffffff, 0 0 30px rgba(var(--cta-rgb), 0.95), 0 0 46px rgba(var(--red-bright-rgb), 0.6), 0 1px 14px rgba(0, 0, 0, 0.55);
+    text-shadow: 0 0 8px #ffe0d6, 0 0 32px rgba(var(--red-bright-rgb), 1), 0 0 56px rgba(var(--red-bright-rgb), 0.8), 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   97% {
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
