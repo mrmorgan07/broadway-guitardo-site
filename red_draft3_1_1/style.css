@@ -61,12 +61,12 @@
   --panel: #1b1717;
   --panel-2: #231e1e;      /* лёгкий подъём для глубины панелей */
 
-  /* Винная гамма: заливки — благородное бордо #800020 / #7F1734,
-     текст-акценты — осветлённый кримсон #C13A57 (читаемость на тёмном фоне). */
-  --red: #c13a57;            /* акценты: красный текст, тонкие линии, границы, свечения */
-  --red-rgb: 193, 58, 87;
-  --red-bright: #d24e6b;     /* чуть ярче — для бликов/мерцания */
-  --red-bright-rgb: 210, 78, 107;
+  /* Заливки — благородное бордо #800020 / #7F1734;
+     текст-акценты — сочный вишнёвый кримсон #D81E34 (насыщенный, не розовый). */
+  --red: #d81e34;            /* акценты: красный текст, тонкие линии, границы, свечения */
+  --red-rgb: 216, 30, 52;
+  --red-bright: #ec3450;     /* чуть ярче — для бликов/мерцания */
+  --red-bright-rgb: 236, 52, 80;
   --red-deep: #800020;       /* сплошная заливка (карточки афиши, плашки) */
   --red-wine: #2a0608;
   --cta: #800020;            /* заливка кнопок */
@@ -267,13 +267,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   86% {
-    text-shadow: 0 0 6px #ffd0d8, 0 0 20px rgba(210, 78, 107, 1), 0 0 40px rgba(193, 58, 87, 0.75), 0 1px 14px rgba(0, 0, 0, 0.55);
+    text-shadow: 0 0 6px #ffd6d0, 0 0 20px rgba(236, 52, 80, 1), 0 0 40px rgba(216, 30, 52, 0.75), 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   89% {
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   93% {
-    text-shadow: 0 0 8px #ffdbe1, 0 0 32px rgba(210, 78, 107, 1), 0 0 58px rgba(193, 58, 87, 0.85), 0 1px 14px rgba(0, 0, 0, 0.55);
+    text-shadow: 0 0 8px #ffe0da, 0 0 32px rgba(236, 52, 80, 1), 0 0 58px rgba(216, 30, 52, 0.85), 0 1px 14px rgba(0, 0, 0, 0.55);
   }
   97% {
     text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
@@ -851,8 +851,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 .poster .btn { flex: 1; padding: 12px 8px; font-size: 11px; }
 .poster .btn-secondary { color: var(--cream); border-color: rgba(237, 235, 221, 0.4); }
 .poster .btn-secondary:hover { background: rgba(237, 235, 221, 0.1); border-color: var(--cream); }
-.poster .btn-dark { background: var(--cta); color: var(--cream); border: 1px solid var(--red); }
-.poster .btn-dark:hover { background: var(--cta-bright); border-color: var(--red-bright); }
+.poster .btn-dark { background: var(--cta); color: var(--cream); border: 1px solid rgba(237, 235, 221, 0.4); }
+.poster .btn-dark:hover { background: var(--cta-bright); border-color: var(--cream); }
 
 /* Статус-плашки спектакля — правый верх постера (дата слева, статусы справа) */
 .poster__badges {
@@ -904,6 +904,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   text-align: center;
   letter-spacing: 0.04em;
   margin-bottom: clamp(20px, 2.5vw, 30px);
+  color: var(--red-deep);   /* цвет заливки карточек спектаклей (#800020) */
 }
 
 /* ==========================================================================
