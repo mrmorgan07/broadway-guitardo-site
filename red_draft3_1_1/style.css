@@ -775,7 +775,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 .pcar__dot.active { background: var(--red); transform: scale(1.3); }
 
 .poster {
-  background: linear-gradient(180deg, #7f1734 0%, var(--red-deep) 100%);
+  background: var(--red-deep); /* винный #800020 — единый с заголовками «Афиша»/«Репертуар» */
   border-radius: var(--radius);
   padding: 14px 14px 18px;
   display: flex;
@@ -854,6 +854,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 .poster .btn-dark { background: var(--cta); color: var(--cream); border: 1px solid rgba(237, 235, 221, 0.4); }
 .poster .btn-dark:hover { background: var(--cta-bright); border-color: var(--cream); }
 
+/* Репертуар — сетка постеров */
+.rep__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(345px, 1fr));
+  gap: clamp(16px, 2vw, 26px);
+}
+
 /* Статус-плашки спектакля — правый верх постера (дата слева, статусы справа) */
 .poster__badges {
   position: absolute;
@@ -904,7 +911,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   text-align: center;
   letter-spacing: 0.04em;
   margin-bottom: clamp(20px, 2.5vw, 30px);
-  color: var(--red-deep);   /* цвет заливки карточек спектаклей (#800020) */
+  color: var(--red-deep);   /* винный #800020 — единый с заливкой карточек */
 }
 
 /* ==========================================================================
@@ -1991,6 +1998,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
     var(--red) 0%, var(--red) 38%,
     #ffe9d6 46%, #ffffff 50%, #ffe9d6 54%,
     var(--red) 62%, var(--red) 100%);
+}
+/* Заголовки «Афиша»/«Репертуар» — винный #800020 (в тон заливке карточек) */
+.afisha-title.sweepable {
+  background-image: linear-gradient(100deg,
+    var(--red-deep) 0%, var(--red-deep) 38%,
+    #ffe9d6 46%, #ffffff 50%, #ffe9d6 54%,
+    var(--red-deep) 62%, var(--red-deep) 100%);
 }
 /* Один проход при появлении (forwards — остаётся в покое после) */
 .sweepable.swept { animation: titleSweep 1.5s ease-out forwards; }

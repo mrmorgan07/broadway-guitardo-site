@@ -107,6 +107,7 @@ const TEXT_DEFAULTS = {
   quote: "Разные профессии.\nОдна любовь —\nк музыке и к сцене.",
   leadersEyebrow: "Лица коллектива",
   afishaTitle: "Афиша",
+  repertoireTitle: "Репертуар",
   featureEyebrow: "Текущий проект",
   galleryPhrase: "Мы очень разные, но на сцене мы — единый организм",
   locationEyebrow: "Локация",
@@ -126,9 +127,12 @@ let DB = null;
 
 // Спектакль показывается на сайте, если не выключен тумблером «Активен».
 const isActive = (p) => !!p && p.active !== false;
+// Раздел спектакля (взаимоисключающе): афиша (по умолчанию) или репертуар.
+const inAfisha = (p) => isActive(p) && p.stage !== "repertoire";
+const inRepertoire = (p) => isActive(p) && p.stage === "repertoire";
 
 function featuredProject(db) {
-  const projects = (db.projects || []).filter(isActive);
+  const projects = (db.projects || []).filter(inAfisha);
   if (!projects.length) return null;
   const heroTitle = (db.hero?.title || "").trim().toLowerCase();
   return projects.find((x) => (x.title || "").trim().toLowerCase() === heroTitle) || projects[0];
@@ -138,7 +142,7 @@ function featuredProject(db) {
 // из афиши (shows). Фолбэк — дата самого спектакля (легаси).
 function heroDeadline(db) {
   const projects = db.projects || [];
-  const target = projects.filter(isActive).find((p) => /бал\s*вампир/i.test(p.title || "")) || featuredProject(db);
+  const target = projects.filter(inAfisha).find((p) => /бал\s*вампир/i.test(p.title || "")) || featuredProject(db);
   if (!target) return null;
   const now = Date.now();
   const future = (db.shows || [])
@@ -523,13 +527,13 @@ function renderAfisha(shows, spectacles = []) {
   const byId = Object.fromEntries((spectacles || []).map((p) => [p.id, p]));
   const fromShows = (Array.isArray(shows) ? shows : [])
     .map((s) => ({ s, p: byId[s.spectacleId] }))
-    .filter((x) => isActive(x.p))
+    .filter((x) => inAfisha(x.p))
     .sort((a, b) => showTime(a.s) - showTime(b.s))
     .map(({ s, p }) => posterCard(p, s, `data-show="${esc(s.id)}"`));
   // Фолбэк на спектакли, если расписание пусто или все показы «осиротели»
   const cardsArr = fromShows.length
     ? fromShows
-    : (spectacles || []).filter(isActive).map((p) => posterCard(p, p, `data-project="${esc(p.id)}"`));
+    : (spectacles || []).filter(inAfisha).map((p) => posterCard(p, p, `data-project="${esc(p.id)}"`));
   const cards = cardsArr.join("");
   const count = cardsArr.length;
 
@@ -547,6 +551,37 @@ function renderAfisha(shows, spectacles = []) {
           <button class="pcar__arrow pcar__arrow--next" aria-label="Вперёд"></button>
         </div>
         ${count > 3 ? `<div class="pcar__dots">${dots}</div>` : ""}
+      </div>
+    </section>`;
+}
+
+// Карточка постановки в «Репертуаре» (как в афише, но без дат/билетов)
+function repertoireCard(p) {
+  const tag = [p.tag, p.duration].filter(Boolean).join(" · ");
+  const cast = mainCastId(p);
+  const attr = `data-project="${esc(p.id)}"${cast ? ` data-cast="${esc(cast)}"` : ""}`;
+  return `
+    <article class="poster" ${attr}>
+      <div class="poster__media">
+        <img src="${esc(imgUrl(p.poster))}" alt="${esc(p.title)}" loading="lazy">
+      </div>
+      <h3 class="poster__title">${esc(p.title)}</h3>
+      ${tag ? `<p class="poster__tag">${esc(tag)}</p>` : ""}
+      <div class="poster__actions">
+        <button class="btn btn-secondary" ${attr}>О спектакле</button>
+      </div>
+    </article>`;
+}
+
+// Раздел «Репертуар» — сетка прошедших/архивных постановок (stage: repertoire)
+function renderRepertoire(db) {
+  const items = (db.projects || []).filter(inRepertoire);
+  if (!items.length) return "";
+  return `
+    <section class="section" id="repertoire">
+      <div class="container">
+        <h2 class="section-title section-title--red afisha-title reveal">${esc(txt("repertoireTitle"))}</h2>
+        <div class="rep__grid reveal">${items.map(repertoireCard).join("")}</div>
       </div>
     </section>`;
 }
@@ -1256,6 +1291,7 @@ async function boot() {
     renderLeaders(DB) +
     renderAfisha(DB.shows, DB.projects) +
     renderFeature(DB) +
+    renderRepertoire(DB) +
     renderGalleryMosaic(DB, null, uploadsPhotos) +
     renderInvite(DB) +
     renderLocation(DB.location);

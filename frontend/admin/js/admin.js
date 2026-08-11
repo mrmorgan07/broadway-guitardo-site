@@ -240,7 +240,7 @@ function renderProjectsList() {
   list.innerHTML = (db.projects || []).map((p) => `
     <div class="proj-card">
       <div class="proj-card__main">
-        <div class="proj-card__title">${esc(p.title)}${p.active === false ? ` <span class="badge bg-danger">скрыт</span>` : ""}</div>
+        <div class="proj-card__title">${esc(p.title)}${p.active === false ? ` <span class="badge bg-danger">скрыт</span>` : ""}${p.stage === "repertoire" ? ` <span class="badge bg-secondary">репертуар</span>` : ""}</div>
         <div class="proj-card__meta">
           ${p.date ? `<span>${esc(p.date)}</span>` : ""}
           ${p.tag ? `<span class="badge bg-secondary">${esc(p.tag)}</span>` : ""}
@@ -265,7 +265,7 @@ function openProjectEdit(id) {
   editingProjectId = id;
   const p = id ? db.projects.find((x) => x.id === id) : {
     id: "", title: "", date: "", tag: "", description: "", poster: "", gallery: [], soloists: [], ticketLink: "",
-    duration: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, active: true
+    duration: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, active: true, stage: "afisha"
   };
   showView("projectEdit");
 
@@ -286,6 +286,16 @@ function openProjectEdit(id) {
               <input class="form-check-input" type="checkbox" role="switch" name="active" id="projActive" ${p.active !== false ? "checked" : ""}>
               <label class="form-check-label" for="projActive">Активен <span class="text-secondary">(выключи, чтобы скрыть спектакль и его показы с сайта)</span></label>
             </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label d-block">Раздел</label>
+            <div class="btn-group" role="group">
+              <input type="radio" class="btn-check" name="stage" id="stAfisha" value="afisha" ${p.stage !== "repertoire" ? "checked" : ""}>
+              <label class="btn btn-outline-light" for="stAfisha">🎪 Афиша</label>
+              <input type="radio" class="btn-check" name="stage" id="stRep" value="repertoire" ${p.stage === "repertoire" ? "checked" : ""}>
+              <label class="btn btn-outline-light" for="stRep">🎭 Репертуар</label>
+            </div>
+            <div class="form-text">«Репертуар» — прошедшие постановки. Спектакль показывается либо в Афише, либо в Репертуаре.</div>
           </div>
           <div class="col-md-6">
             <label class="form-label">Тег</label>
@@ -436,6 +446,7 @@ async function saveProject(gallery) {
   const body = {
     title: f.title.value.trim(),
     active: f.active.checked,
+    stage: f.stage.value,
     tag: f.tag.value.trim(),
     duration: f.duration.value.trim(),
     description: f.description.value.trim(),
@@ -1291,6 +1302,7 @@ function renderTexts() {
     { key: "quote", label: "Цитата (ступенчатый блок, несколько строк)", area: true, def: "Разные профессии.\nОдна любовь —\nк музыке и к сцене." },
     { key: "leadersEyebrow", label: "«Лица коллектива» — надзаголовок", def: "Лица коллектива" },
     { key: "afishaTitle", label: "Афиша — заголовок", def: "Афиша" },
+    { key: "repertoireTitle", label: "Репертуар — заголовок", def: "Репертуар" },
     { key: "featureEyebrow", label: "Текущий спектакль — надзаголовок", def: "Текущий проект" },
     { key: "galleryPhrase", label: "Галерея — фраза у 3 фото (можно несколько строк)", area: true, def: "Мы очень разные, но на сцене мы — единый организм" },
     { key: "locationEyebrow", label: "Локация — надзаголовок", def: "Локация" },
