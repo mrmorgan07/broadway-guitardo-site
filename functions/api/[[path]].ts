@@ -102,6 +102,7 @@ app.post("/projects", requireAuth, requireCsrf, async (c) => {
     freeAdmission: !!body.freeAdmission,
     soldOut: !!body.soldOut,
     active: body.active !== false,
+    stage: body.stage === "repertoire" ? "repertoire" : "afisha",
   };
   db.projects.push(project);
   await writeContent(c.env, db);
