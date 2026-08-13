@@ -43,13 +43,14 @@ const rusIndex = join(DIST, "rus", "index.html");
 if (existsSync(rusIndex)) {
   const html = readFileSync(rusIndex, "utf8")
     .replaceAll("/red_draft3_1_1/", "/rus/")
-    .replaceAll("Broadway <b>Guitardo</b>", "Бродвей <b>Гитардо</b>")
-    .replaceAll("Broadway Guitardo", "Бродвей Гитардо")
+    // «Бродвей» — по-русски, «GUITARDO» — латиницей заглавными (бренд-вордмарк)
+    .replaceAll("Broadway <b>GUITARDO</b>", "Бродвей <b>GUITARDO</b>")
+    .replaceAll("Broadway GUITARDO", "Бродвей GUITARDO")
     // Переопределяем data-бренд (hero/футер/логотип из /api/content) для /rus:
     .replace('<script src="/rus/script.js',
-      '<script>window.__BRAND__ = "Бродвей Гитардо";</script>\n  <script src="/rus/script.js');
+      '<script>window.__BRAND__ = "Бродвей GUITARDO";</script>\n  <script src="/rus/script.js');
   writeFileSync(rusIndex, html);
-  console.log("✓ dist/rus/index.html: бренд «Бродвей Гитардо», пути → /rus/");
+  console.log("✓ dist/rus/index.html: бренд «Бродвей GUITARDO», пути → /rus/");
 }
 
 // Шрифты макета лежат в соседней red_draft/fonts, а style.css ссылается на них

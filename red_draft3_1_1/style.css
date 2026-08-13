@@ -13,7 +13,7 @@
 @font-face {
   font-family: "Druzhok";
   src: url("/red_draft/fonts/DRUZHOK.otf") format("opentype");
-  font-weight: 400 700;
+  font-weight: 400;          /* один файл = только 400; запрос 700 даёт синтетический жирный */
   font-display: swap;
 }
 @font-face {
@@ -252,11 +252,11 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   animation: logoGlint 5s ease-in-out infinite;
 }
 .logo b {
-  font-weight: 400;
+  font-weight: 700;
   color: var(--cream);
-  font-family: var(--font-label);
-  font-size: 1.4rem;
-  letter-spacing: 0.18em;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  letter-spacing: 0.04em;
   animation: logoGlint 5s ease-in-out infinite;
 }
 
@@ -390,13 +390,14 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 }
 
 .hero__brandsub {
-  font-family: var(--font-label);
-  font-size: clamp(1.5rem, 3.4vw, 2.6rem);
-  letter-spacing: 0.24em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.7rem, 3.8vw, 3rem);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--cream);
-  margin-top: 16px;
-  padding-left: 0.24em;
+  margin-top: 14px;
+  padding-left: 0.04em;
 }
 
 .hero__line {
@@ -1482,10 +1483,10 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 .boot__brand b {
   display: block;
   margin-top: 8px;
-  font-family: var(--font-label);
-  font-weight: 500;
-  font-size: clamp(0.85rem, 2.4vw, 1.25rem);
-  letter-spacing: 0.3em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1rem, 2.8vw, 1.6rem);
+  letter-spacing: 0.06em;
   color: var(--red);
 }
 
