@@ -1022,7 +1022,6 @@ function openProject(id, castId, show) {
     <div class="pd">
       <div class="pd__banner">
         <img src="${esc(imgUrl((p.gallery && p.gallery[0]) || p.poster))}" alt="${esc(p.title)}">
-        <h2 class="pd__banner-title">${esc(p.title)}</h2>
       </div>
 
       <div class="pd__info">
@@ -1031,11 +1030,14 @@ function openProject(id, castId, show) {
           ${p.tag ? `<dt>Формат</dt><dd>${esc(p.tag)}</dd>` : ""}
           ${projectDetailMeta(m)}
         </dl>
-        <div class="pd__desc">
-          <p>${esc(p.description)}</p>
-          ${m.soldOut
-            ? `<span class="btn btn-primary is-sold" aria-disabled="true">Билетов нет</span>`
-            : m.ticketLink ? `<a href="${esc(m.ticketLink)}" class="btn btn-primary" target="_blank" rel="noopener">Билеты</a>` : ""}
+        <div class="pd__main">
+          <h2 class="pd__title">${esc(p.title)}</h2>
+          <div class="pd__desc">
+            <p>${esc(p.description)}</p>
+            ${m.soldOut
+              ? `<span class="btn btn-primary is-sold" aria-disabled="true">Билетов нет</span>`
+              : m.ticketLink ? `<a href="${esc(m.ticketLink)}" class="btn btn-primary" target="_blank" rel="noopener">Билеты</a>` : ""}
+          </div>
         </div>
       </div>
 
