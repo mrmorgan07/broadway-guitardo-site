@@ -6,9 +6,17 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = join(ROOT, "dist");
+
+// Штамп версии сборки: короткий git-SHA (+ «dirty», если есть незакоммиченное) и время (UTC)
+let commit = "unknown";
+try { commit = execSync("git rev-parse --short HEAD", { cwd: ROOT }).toString().trim(); } catch {}
+let dirty = "";
+try { if (execSync("git status --porcelain", { cwd: ROOT }).toString().trim()) dirty = "+dirty"; } catch {}
+const BUILD_VERSION = `${commit}${dirty} · ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`;
 
 rmSync(DIST, { recursive: true, force: true });
 mkdirSync(DIST, { recursive: true });
@@ -31,10 +39,17 @@ copyInto("site", ".");
 // абсолютному пути /site/... — правим префикс на / (только в копии).
 const rootIndex = join(DIST, "index.html");
 if (existsSync(rootIndex)) {
-  const html = readFileSync(rootIndex, "utf8").replaceAll("/site/", "/");
+  const html = readFileSync(rootIndex, "utf8")
+    .replaceAll("/site/", "/")
+    .replace("</head>", `  <meta name="build" content="${BUILD_VERSION}">\n</head>`)
+    .replace("</body>", `  <script>console.log("%cБродвей GUITARDO · build ${BUILD_VERSION}","color:#c13a57;font-weight:700")</script>\n</body>`);
   writeFileSync(rootIndex, html);
-  console.log("✓ dist/index.html: пути ассетов → корень");
+  console.log("✓ dist/index.html: пути ассетов → корень, штамп версии");
 }
+
+// Маркер версии — проверяется без SSH: curl http://домен/version.txt
+writeFileSync(join(DIST, "version.txt"), BUILD_VERSION + "\n");
+console.log(`✓ dist/version.txt: ${BUILD_VERSION}`);
 
 // /rus мигрирован в корень: корень / — единственная русская версия
 // («Бродвей GUITARDO»). Отдельную копию /rus больше не генерируем.
