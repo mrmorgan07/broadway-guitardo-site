@@ -359,7 +359,7 @@ function openProjectEdit(id) {
   editRoles = (p.roles || []).map((r) => ({ id: r.id || uid("role"), name: r.name || "" }));
   editCasts = (p.casts || []).map((c) => ({
     id: c.id || uid("cast"), title: c.title || "",
-    items: (c.items || []).map((it) => ({ roleId: it.roleId || "", soloistId: it.soloistId || "" }))
+    items: (c.items || []).map((it) => ({ roleId: it.roleId || "", soloistId: it.soloistId || "", photo: it.photo || "" }))
   }));
   drawProjRoles();
   drawCasts();
@@ -537,12 +537,32 @@ function drawCasts() {
             <button type="button" class="btn btn-outline-danger btn-sm rm-cast">Удалить</button>
           </div>
           <div class="cast-items">
-            ${c.items.map((it, ii) => `
-              <div class="d-flex gap-2 mb-2" data-citem="${ii}">
-                <select class="form-select cast-role">${roleOptionsHtml(it.roleId)}</select>
-                <select class="form-select cast-soloist">${soloistOptionsHtml(it.soloistId)}</select>
-                <button type="button" class="btn btn-outline-danger btn-sm rm-citem">✕</button>
-              </div>`).join("")}
+            ${c.items.map((it, ii) => {
+              const sol = (db.soloists || []).find((s) => s.id === it.soloistId);
+              const photos = sol ? (Array.isArray(sol.photos) && sol.photos.length ? sol.photos : (sol.photo ? [sol.photo] : [])) : [];
+              const eff = it.photo || photos[0] || "";
+              return `
+              <div class="mb-2 pb-2 border-bottom border-secondary" data-citem="${ii}">
+                <div class="d-flex gap-2 align-items-center">
+                  <div class="flex-shrink-0" title="${it.photo ? "Выбрано фото для этого спектакля" : "Фото по умолчанию"}">
+                    ${eff
+                      ? `<img src="${esc(mediaSrc(eff))}" class="rounded-circle" style="width:44px;height:44px;object-fit:cover" alt="">`
+                      : `<div class="rounded-circle border border-secondary d-flex align-items-center justify-content-center text-muted" style="width:44px;height:44px;font-size:.6rem">нет</div>`}
+                  </div>
+                  <select class="form-select cast-role">${roleOptionsHtml(it.roleId)}</select>
+                  <select class="form-select cast-soloist">${soloistOptionsHtml(it.soloistId)}</select>
+                  <button type="button" class="btn btn-outline-danger btn-sm rm-citem">✕</button>
+                </div>
+                ${sol && photos.length > 1 ? `
+                  <div class="d-flex flex-wrap gap-1 mt-2 ms-5">
+                    <button type="button" class="btn btn-sm ${!it.photo ? "btn-gold" : "btn-outline-secondary"} citem-ph" data-ph="">По умолчанию</button>
+                    ${photos.map((ph) => `
+                      <button type="button" class="p-0 border ${it.photo === ph ? "border-warning border-2" : "border-secondary"} citem-ph" data-ph="${esc(ph)}" style="border-radius:6px;overflow:hidden;line-height:0" title="Фото для этого спектакля">
+                        <img src="${esc(mediaSrc(ph))}" style="width:40px;height:40px;object-fit:cover" alt=""></button>`).join("")}
+                  </div>`
+                  : (sol && !photos.length ? `<div class="form-text ms-5 text-warning">У солиста нет фото — добавьте в разделе «Солисты».</div>` : "")}
+              </div>`;
+            }).join("")}
           </div>
           <button type="button" class="btn btn-outline-secondary btn-sm add-citem">+ Роль→Солист</button>
         </div></div>`).join("")
@@ -552,12 +572,17 @@ function drawCasts() {
     const ci = Number(card.dataset.cast);
     card.querySelector(".cast-title").oninput = (e) => { editCasts[ci].title = e.target.value; };
     card.querySelector(".rm-cast").onclick = () => { editCasts.splice(ci, 1); drawCasts(); };
-    card.querySelector(".add-citem").onclick = () => { editCasts[ci].items.push({ roleId: "", soloistId: "" }); drawCasts(); };
+    card.querySelector(".add-citem").onclick = () => { editCasts[ci].items.push({ roleId: "", soloistId: "", photo: "" }); drawCasts(); };
     card.querySelectorAll("[data-citem]").forEach((row) => {
       const ii = Number(row.dataset.citem);
       row.querySelector(".cast-role").onchange = (e) => { editCasts[ci].items[ii].roleId = e.target.value; };
-      row.querySelector(".cast-soloist").onchange = (e) => { editCasts[ci].items[ii].soloistId = e.target.value; };
+      // при смене солиста перерисовываем — обновляется превью «общего» фото
+      row.querySelector(".cast-soloist").onchange = (e) => { editCasts[ci].items[ii].soloistId = e.target.value; drawCasts(); };
       row.querySelector(".rm-citem").onclick = () => { editCasts[ci].items.splice(ii, 1); drawCasts(); };
+      // выбор фото солиста для этого спектакля (чипы: «По умолчанию» + миниатюры)
+      row.querySelectorAll(".citem-ph").forEach((btn) => {
+        btn.onclick = () => { editCasts[ci].items[ii].photo = btn.dataset.ph || ""; drawCasts(); };
+      });
     });
   });
 }
@@ -567,7 +592,8 @@ function drawCasts() {
    ========================================================================== */
 function renderSoloistsRegistry() {
   const list = (db.soloists || []).map((s) => ({
-    id: s.id || uid("sol"), name: s.name || "", photo: s.photo || "", bio: s.bio || ""
+    id: s.id || uid("sol"), name: s.name || "", bio: s.bio || "",
+    photos: (Array.isArray(s.photos) && s.photos.length) ? s.photos.slice() : (s.photo ? [s.photo] : [])
   }));
 
   function draw() {
@@ -581,13 +607,20 @@ function renderSoloistsRegistry() {
         ${list.length ? list.map((s, i) => `
           <div class="col-md-6" data-sol="${i}">
             <div class="card bg-dark border-secondary"><div class="card-body d-flex gap-3">
-              <div class="text-center">
-                ${s.photo
-                  ? `<img src="${esc(mediaSrc(s.photo))}" class="rounded" style="width:80px;height:80px;object-fit:cover" alt="">`
-                  : `<div class="text-muted d-flex align-items-center justify-content-center border border-secondary rounded" style="width:80px;height:80px;font-size:.7rem">нет фото</div>`}
-                <input type="hidden" class="sol-photo" value="${esc(s.photo)}">
+              <div class="text-center" style="min-width:130px">
+                <div class="d-flex flex-wrap gap-1 justify-content-center">
+                  ${s.photos.length ? s.photos.map((ph, pi) => `
+                    <div class="position-relative" data-ph="${pi}">
+                      <img src="${esc(mediaSrc(ph))}" class="rounded" style="width:56px;height:56px;object-fit:cover;${pi === 0 ? "outline:2px solid #ffc107;outline-offset:1px" : ""}" alt="">
+                      ${pi === 0
+                        ? `<span class="badge bg-warning text-dark position-absolute bottom-0 start-50 translate-middle-x" style="font-size:.5rem">осн.</span>`
+                        : `<button type="button" class="btn btn-warning btn-sm mk-default position-absolute bottom-0 start-0 p-0" style="width:16px;height:16px;line-height:1;font-size:.6rem" title="Сделать основным">★</button>`}
+                      <button type="button" class="btn btn-danger btn-sm rm-ph position-absolute top-0 end-0 p-0" style="width:16px;height:16px;line-height:1;font-size:.6rem" title="Удалить фото">×</button>
+                    </div>`).join("")
+                    : `<div class="text-muted d-flex align-items-center justify-content-center border border-secondary rounded" style="width:56px;height:56px;font-size:.6rem">нет фото</div>`}
+                </div>
                 <input type="file" class="sol-file d-none" accept="image/*">
-                <button type="button" class="btn btn-outline-secondary btn-sm mt-2 sol-upload">📷</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2 sol-upload">📷 + фото</button>
               </div>
               <div class="flex-grow-1">
                 <input class="form-control mb-2 sol-name" value="${esc(s.name)}" placeholder="Имя">
@@ -612,16 +645,23 @@ function renderSoloistsRegistry() {
         const f = file.files[0]; if (!f) return;
         try {
           const r = await uploadFile(f);
-          list[i].photo = r.url;
+          list[i].photos.push(r.url);
           draw();
           toast("Фото загружено");
         } catch (e) { toast(e.message, "error"); }
       };
+      row.querySelectorAll("[data-ph]").forEach((ph) => {
+        const pi = Number(ph.dataset.ph);
+        const rm = ph.querySelector(".rm-ph");
+        if (rm) rm.onclick = () => { list[i].photos.splice(pi, 1); draw(); };
+        const mk = ph.querySelector(".mk-default");
+        if (mk) mk.onclick = () => { const [p] = list[i].photos.splice(pi, 1); list[i].photos.unshift(p); draw(); };
+      });
     });
 
     document.getElementById("saveSoloistsReg").onclick = async () => {
       const clean = list
-        .map((s) => ({ id: s.id, name: s.name.trim(), photo: s.photo.trim(), bio: (s.bio || "").trim() }))
+        .map((s) => ({ id: s.id, name: s.name.trim(), photos: s.photos, photo: s.photos[0] || "", bio: (s.bio || "").trim() }))
         .filter((s) => s.name);
       try {
         await api("/api/soloists", { method: "PUT", body: JSON.stringify(clean) });
