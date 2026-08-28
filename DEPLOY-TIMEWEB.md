@@ -1,7 +1,11 @@
 # Деплой на Timeweb (VPS + S3) — чеклист
 
-Стек после переезда с Cloudflare: **VPS (Express + SQLite-файл)** раздаёт сайт и API,
-**Timeweb S3** хранит медиа. Доступно из РФ без VPN. Ветка: `deploy-timeweb`.
+Стек после переезда с Cloudflare: **nginx** отдаёт статику `dist` (корень + `/admin`)
+и проксирует `/api/*` на **Express (pm2)**; **SQLite-файл** — данные; **Timeweb S3** —
+медиа. Доступно из РФ без VPN. Ветка: `dev_rus`.
+
+> Сайт одноязычный: корень `/` — русская версия «Бродвей GUITARDO» (бывший `/rus`
+> мигрирован в корень, отдельного `/rus` больше нет).
 
 Легенда: 🧑 — делаешь ты; 🤖 — уже в коде.
 
@@ -34,26 +38,35 @@ node scripts/export-turso-to-seed.mjs
 (`https://s3.twcstorage.ru/<bucket>`).
 
 🧑 **CORS** бакета (для прямой загрузки видео из браузера): разрешить `PUT` с
-origin вашего домена (`AllowedMethods: PUT`, `AllowedOrigins: https://ваш-домен`,
-`AllowedHeaders: *`).
+origin вашего домена (`AllowedMethods: PUT, GET`, `AllowedOrigins: https://ваш-домен`,
+`AllowedHeaders: *`, `ExposeHeaders: ETag`).
 
 ## 2. VPS
 
-🧑 Timeweb Cloud → облачный сервер (Ubuntu 22.04, минимум 1 vCPU / 1–2 ГБ). Взять IP + SSH.
+🧑 Timeweb Cloud → облачный сервер (Ubuntu 24.04, **2 ГБ RAM** — sharp ест память
+при обработке фото; 1 vCPU достаточно; диск 20–30 ГБ). Взять IP + SSH.
 
-🧑 На сервере поставить Node 20+ и pm2:
+🧑 Базовая настройка + Node 20 + nginx + pm2 + swap:
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
-sudo apt-get install -y nodejs nginx
+sudo apt update && sudo apt upgrade -y
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs nginx git certbot python3-certbot-nginx
 sudo npm i -g pm2
+# swap под пики sharp
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+sudo ufw allow OpenSSH && sudo ufw allow 'Nginx Full' && sudo ufw enable
 ```
 
 ## 3. Приложение
 
-🧑 Склонировать ветку и поставить зависимости:
+🧑 Склонировать ветку, поставить зависимости, собрать статику:
 ```bash
-git clone -b deploy-timeweb <repo-url> broadway && cd broadway
+sudo mkdir -p /var/www/broadway && sudo chown $USER:$USER /var/www/broadway
+git clone -b dev_rus <repo-url> /var/www/broadway && cd /var/www/broadway
 npm ci
+npm run pages:build          # → ./dist (корень + /admin + шрифты)
 ```
 
 🧑 Создать `.env` (по образцу `.env.example`) и заполнить S3-переменные:
@@ -71,48 +84,89 @@ S3_PUBLIC_BASE=https://s3.twcstorage.ru/broadway-media
 (создастся сам, засеется из `backend/data/db.json` при первом старте, включая
 миграцию афиши).
 
-🧑 Запустить под pm2:
+🧑 Запустить API под pm2 (обслуживает только `/api/*`):
 ```bash
-pm2 start backend/server.js --name broadway
-pm2 save && pm2 startup   # автозапуск после ребута
+pm2 start backend/server.js --name broadway-api --max-memory-restart 700M
+pm2 save && pm2 startup   # выполнить выведенную команду — автозапуск после ребута
 ```
-В логе должно быть `🗄  Медиа: S3 (...)` — значит S3 подхватился (иначе будет
-`локальный диск`, проверь S3_*).
+В логе `pm2 logs broadway-api` должно быть `🗄  Медиа: S3 (...)` — значит S3
+подхватился (иначе будет `локальный диск`, проверь S3_*).
 
-## 4. Домен + HTTPS (nginx)
+## 4. Домен + nginx (раздаёт dist, проксирует /api)
 
-🧑 A-запись домена → IP сервера. Затем nginx-прокси на `:3000`:
+🧑 A-запись домена → IP сервера. Конфиг `/etc/nginx/sites-available/broadway`:
 ```nginx
 server {
-  server_name ваш-домен;
-  client_max_body_size 20m;   # для загрузки фото; видео идёт мимо (в S3)
-  location / { proxy_pass http://127.0.0.1:3000; proxy_set_header Host $host; }
+  server_name ваш-домен www.ваш-домен;
+  root /var/www/broadway/dist;
+  index index.html;
+  client_max_body_size 25m;   # для загрузки фото; видео идёт мимо (presigned в S3)
+
+  gzip on;
+  gzip_types text/css application/javascript image/svg+xml application/json;
+
+  # API → Express
+  location /api/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # Админка
+  location = /admin { return 301 /admin/; }
+  location /admin/ { try_files $uri $uri/ /admin/index.html; }
+
+  # Кеш статических ассетов
+  location ~* \.(css|js|woff2?|jpg|jpeg|png|webp|svg|mp4)$ {
+    expires 30d; add_header Cache-Control "public";
+  }
+
+  # Корневой сайт
+  location / { try_files $uri $uri/ /index.html; }
 }
+```
+🧑 Активировать и проверить:
+```bash
+sudo ln -s /etc/nginx/sites-available/broadway /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
 ```
 🧑 TLS бесплатно:
 ```bash
-sudo apt-get install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d ваш-домен
+sudo certbot --nginx -d ваш-домен -d www.ваш-домен
+sudo certbot renew --dry-run
 ```
 
 ## 5. Проверка
 
-🧑 Открыть `https://ваш-домен/` — сайт с данными.
+🧑 `https://ваш-домен/` — сайт «Бродвей GUITARDO», hero-видео играет, данные из API.
 🧑 `https://ваш-домен/admin/` — войти (логин/пароль из `backend/data/auth.json`;
 по умолчанию `admin` / `12345`, **сменить**).
-🧑 Медиатека → загрузить фото → должно уйти в бакет `broadway-media/gallery/...`
-и открыться по S3-URL. Видео — грузится напрямую в S3 (presigned).
+🧑 `curl https://ваш-домен/api/capabilities` → `{"storage":"s3","presignVideo":true,...}`.
+🧑 Медиатека → загрузить фото → уйдёт в бакет `broadway-media/gallery/...` и
+откроется по S3-URL. Видео — грузится напрямую в S3 (presigned PUT).
+🧑 После `sudo reboot` сайт и API поднимаются сами (pm2 + nginx).
+
+## 6. Обновления
+
+- Фронт/бренд/контент шаблонов: `git pull` → `npm run pages:build` (иначе корень = 404).
+- Бэкенд: `git pull` → `npm ci` (если менялись зависимости) → `pm2 restart broadway-api`.
+- Сид `db.json` применяется только к **пустой** БД → для пересева остановить API,
+  удалить `backend/data/site.db*`, запустить снова.
 
 ---
 
-## Что уже сделано в коде (ветка deploy-timeweb)
+## Что уже сделано в коде (ветка dev_rus)
 - 🤖 `backend/storage.js` — S3-клиент (aws4fetch) + индекс медиа в БД (`kv.media`).
 - 🤖 Express: загрузка фото → S3 (sharp-оптимизация + превью), видео → presigned
   прямая загрузка в S3, медиатека/галерея/удаление — из индекса. Всё под флагом:
   нет `S3_*` → работает на диске, как раньше.
 - 🤖 БД — локальный SQLite-файл (managed-БД не требуется).
-- 🤖 Составы/роли/афиша + карусели — включены (собрано из dev_new_feature + dev2).
+- 🤖 `scripts/build-pages.mjs` — сборка `dist` (корень «Бродвей GUITARDO» + `/admin` + шрифты).
+- 🤖 Составы/роли/афиша + карусели + раздел «Репертуар» — включены.
 
 ## Что уходит
+
 Cloudflare Pages/Workers/R2, Turso. Папка `functions/` и `wrangler.toml` остаются в
-репозитории, но на Timeweb не используются (можно удалить позже).
+репозитории, но на Timeweb не используются (nginx их игнорирует; можно удалить позже).

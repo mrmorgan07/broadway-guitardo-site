@@ -908,7 +908,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 
 /* Огромный заголовок АФИША */
 .afisha-title {
-  font-size: clamp(2.6rem, 5.5vw, 5rem);
+  font-size: clamp(5.2rem, 11vw, 10rem);
   text-align: center;
   letter-spacing: 0.04em;
   margin-bottom: clamp(20px, 2.5vw, 30px);
@@ -1969,10 +1969,11 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 }
 
 /* --- Точечные правки высоты секций --- */
-/* «Лица коллектива» — опустить ниже, чтобы не подглядывала из-под слогана */
-#leaders { padding-top: clamp(80px, 10vw, 140px); }
-/* Афиша — компактнее по вертикали, чтобы влезала целиком */
-#afisha { padding-block: clamp(40px, 5vw, 60px); }
+/* «Мы — Бродвей GUITARDO» — опустить ниже, чтобы не подглядывала из-под слогана;
+   низ подрезан, чтобы сократить зазор до Афиши */
+#leaders { padding-top: clamp(80px, 10vw, 140px); padding-bottom: clamp(12px, 1.6vw, 24px); }
+/* Афиша — компактнее по вертикали; верх подрезан (низ оставляем до «Бал Вампиров») */
+#afisha { padding-top: clamp(16px, 2vw, 28px); padding-bottom: clamp(40px, 5vw, 60px); }
 
 /* ==========================================================================
    ЭФФЕКТ #1 — разовый specular-sweep по заголовкам и слогану (по входу в экран)

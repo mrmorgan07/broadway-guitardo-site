@@ -1,5 +1,5 @@
 // Собирает выходную папку ./dist для Cloudflare Pages.
-// Переносим ТОЛЬКО макет red_draft3_1_1 (как основной сайт в корне) + админку.
+// Переносим ТОЛЬКО каталог site (основной сайт в корне) + админку.
 // API берётся из ./functions автоматически.
 // Запуск: node scripts/build-pages.mjs (обычно через npm run pages:build)
 
@@ -25,33 +25,19 @@ function copyInto(srcRel, destRel) {
   console.log(`✓ ${srcRel} → dist/${destRel === "." ? "" : destRel}`);
 }
 
-// Основной сайт — макет red_draft3_1_1 в корень
-copyInto("red_draft3_1_1", ".");
+// Основной сайт — каталог site в корень
+copyInto("site", ".");
 // В корне ассеты лежат в корне, а исходный index.html ссылается на них по
-// абсолютному пути /red_draft3_1_1/... — правим префикс на / (только в копии).
+// абсолютному пути /site/... — правим префикс на / (только в копии).
 const rootIndex = join(DIST, "index.html");
 if (existsSync(rootIndex)) {
-  const html = readFileSync(rootIndex, "utf8").replaceAll("/red_draft3_1_1/", "/");
+  const html = readFileSync(rootIndex, "utf8").replaceAll("/site/", "/");
   writeFileSync(rootIndex, html);
   console.log("✓ dist/index.html: пути ассетов → корень");
 }
 
-// Русская копия сайта под /rus: бренд «Бродвей Гитардо», пути ассетов → /rus/.
-// Корень / остаётся английским («Broadway Guitardo»), это отдельная копия.
-copyInto("red_draft3_1_1", "rus");
-const rusIndex = join(DIST, "rus", "index.html");
-if (existsSync(rusIndex)) {
-  const html = readFileSync(rusIndex, "utf8")
-    .replaceAll("/red_draft3_1_1/", "/rus/")
-    // «Бродвей» — по-русски, «GUITARDO» — латиницей заглавными (бренд-вордмарк)
-    .replaceAll("Broadway <b>GUITARDO</b>", "Бродвей <b>GUITARDO</b>")
-    .replaceAll("Broadway GUITARDO", "Бродвей GUITARDO")
-    // Переопределяем data-бренд (hero/футер/логотип из /api/content) для /rus:
-    .replace('<script src="/rus/script.js',
-      '<script>window.__BRAND__ = "Бродвей GUITARDO";</script>\n  <script src="/rus/script.js');
-  writeFileSync(rusIndex, html);
-  console.log("✓ dist/rus/index.html: бренд «Бродвей GUITARDO», пути → /rus/");
-}
+// /rus мигрирован в корень: корень / — единственная русская версия
+// («Бродвей GUITARDO»). Отдельную копию /rus больше не генерируем.
 
 // Шрифты макета лежат в соседней red_draft/fonts, а style.css ссылается на них
 // по абсолютному пути /red_draft/fonts/... — переносим, чтобы путь резолвился.
