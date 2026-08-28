@@ -978,20 +978,34 @@ function openShow(showId) {
 }
 
 // Состав спектакля для детали. castId — какой состав показать (из показа афиши).
+// Карточки солистов одного состава (для табов и первичной отрисовки)
+function castCardsHtml(p, cast) {
+  const roleById = Object.fromEntries((p.roles || []).map((r) => [r.id, r.name]));
+  const solById = Object.fromEntries((DB.soloists || []).map((s) => [s.id, s]));
+  return (cast.items || []).map((it) => {
+    const sol = solById[it.soloistId] || {};
+    if (!sol.name && !roleById[it.roleId]) return "";
+    return soloistCard({ name: sol.name || "", role: roleById[it.roleId] || "", photo: it.photo || sol.photo || "" });
+  }).join("");
+}
+
 function renderCastBlock(p, castId) {
-  const casts = Array.isArray(p.casts) ? p.casts : [];
-  const cast = casts.length ? ((castId && casts.find((c) => c.id === castId)) || casts[0]) : null;
-  if (cast && (cast.items || []).length) {
-    const roleById = Object.fromEntries((p.roles || []).map((r) => [r.id, r.name]));
-    const solById = Object.fromEntries((DB.soloists || []).map((s) => [s.id, s]));
-    const cards = (cast.items || []).map((it) => {
-      const sol = solById[it.soloistId] || {};
-      if (!sol.name && !roleById[it.roleId]) return "";
-      return soloistCard({ name: sol.name || "", role: roleById[it.roleId] || "", photo: sol.photo || "" });
-    }).join("");
+  const casts = (Array.isArray(p.casts) ? p.casts : []).filter((c) => (c.items || []).length);
+  if (casts.length) {
+    const active = (castId && casts.find((c) => c.id === castId)) || casts[0];
+    const cards = castCardsHtml(p, active);
     if (!cards) return "";
-    const title = cast.title ? `Состав — ${esc(cast.title)}` : "Солисты";
-    return `<div class="pd__block"><h3 class="pd__h3">${title}</h3><div class="soloists__grid">${cards}</div></div>`;
+    const multi = casts.length > 1;
+    const tabs = multi
+      ? `<div class="cast-tabs" role="tablist">${casts.map((c) => `
+          <button type="button" class="cast-tab${c.id === active.id ? " active" : ""}" data-cast-tab="${esc(c.id)}">${esc(c.title || "Состав")}</button>`).join("")}</div>`
+      : "";
+    const title = multi ? "Составы" : (active.title ? `Состав — ${esc(active.title)}` : "Солисты");
+    return `<div class="pd__block" data-castblock>
+        <h3 class="pd__h3">${title}</h3>
+        ${tabs}
+        <div class="soloists__grid" data-cast-grid>${cards}</div>
+      </div>`;
   }
   // Легаси-фолбэк: старые солисты внутри спектакля
   const legacy = (p.soloists || []).map((s) => soloistCard(s)).join("");
@@ -1061,6 +1075,20 @@ function openProject(id, castId, show) {
     </div>`;
 
   $$("[data-carousel]", $("#projectBody")).forEach(initCarousel);
+
+  // Переключатель составов (когда у спектакля их несколько)
+  const castBlock = $("#projectBody").querySelector("[data-castblock]");
+  if (castBlock) {
+    const grid = castBlock.querySelector("[data-cast-grid]");
+    castBlock.querySelectorAll(".cast-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        castBlock.querySelectorAll(".cast-tab").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        const c = (p.casts || []).find((x) => x.id === tab.dataset.castTab);
+        if (c && grid) grid.innerHTML = castCardsHtml(p, c);
+      });
+    });
+  }
 
   const modal = $("#projectModal");
   modal.classList.add("open");
