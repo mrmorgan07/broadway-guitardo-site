@@ -608,7 +608,6 @@ function renderFeature(db) {
         <div class="feature__stage reveal">
           <div class="feature__banner carousel" data-carousel>
             <div class="carousel__track">${banners}</div>
-            <h2 class="feature__banner-title">${esc(p.title)}</h2>
             ${multi ? `
             <div class="feature__nav">
               <button class="feature__arrow prev" aria-label="Назад"></button>
@@ -619,6 +618,7 @@ function renderFeature(db) {
 
         <div class="feature__cta reveal">
           <p class="section-eyebrow">${esc(txt("featureEyebrow"))}</p>
+          <h2 class="feature__title">${esc(p.title)}</h2>
           <p class="feature__cta-desc">${esc(p.description)}</p>
           <div class="hero__actions" style="justify-content:center">
             <button class="btn btn-secondary" data-project="${esc(p.id)}" data-cast="${esc(mainCastId(p))}">О спектакле</button>
