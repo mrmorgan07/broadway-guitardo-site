@@ -1003,6 +1003,25 @@ window.addEventListener("resize", () => {
   _fitRaf = requestAnimationFrame(() => fitSoloistNames(document.getElementById("projectBody")));
 });
 
+// Автоподгон крупных заголовков секций («АФИША», «РЕПЕРТУАР») под ширину экрана:
+// уменьшаем шрифт от CSS-размера, пока слово не влезет — на любом разрешении.
+function fitBigTitle(el) {
+  el.style.whiteSpace = "nowrap";
+  el.style.fontSize = "";                                   // вернуть к CSS (clamp)
+  let size = parseFloat(getComputedStyle(el).fontSize) || 0;
+  let guard = 0;
+  while (el.scrollWidth > el.clientWidth && size > 30 && guard++ < 160) {
+    size -= 2;
+    el.style.fontSize = size + "px";
+  }
+}
+function fitBigTitles() { document.querySelectorAll(".afisha-title").forEach(fitBigTitle); }
+let _titleRaf;
+window.addEventListener("resize", () => {
+  cancelAnimationFrame(_titleRaf);
+  _titleRaf = requestAnimationFrame(fitBigTitles);
+});
+
 // Карточки солистов одного состава (для табов и первичной отрисовки)
 function castCardsHtml(p, cast) {
   const roleById = Object.fromEntries((p.roles || []).map((r) => [r.id, r.name]));
@@ -1361,6 +1380,10 @@ async function boot() {
   $("#footer").innerHTML = renderFooter(DB);
 
   initUI();
+
+  // Подгон крупных заголовков секций («АФИША», «РЕПЕРТУАР») под ширину экрана
+  requestAnimationFrame(fitBigTitles);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBigTitles);
 
   // Увертюра-занавес: держим минимум N мс (полную — раз за сессию), затем поднимаем.
   // Удержание НЕ зависит от reduced-motion (это задержка, а не «движение») —

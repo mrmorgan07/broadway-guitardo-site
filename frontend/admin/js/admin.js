@@ -609,7 +609,7 @@ function renderSoloistsRegistry() {
             <div class="card bg-dark border-secondary"><div class="card-body d-flex gap-3">
               <div class="text-center" style="min-width:130px">
                 <div class="d-flex flex-wrap gap-1 justify-content-center">
-                  ${s.photos.length ? s.photos.map((ph, pi) => `
+                  ${(s.photos && s.photos.length) ? s.photos.map((ph, pi) => `
                     <div class="position-relative" data-ph="${pi}">
                       <img src="${esc(mediaSrc(ph))}" class="rounded" style="width:56px;height:56px;object-fit:cover;${pi === 0 ? "outline:2px solid #ffc107;outline-offset:1px" : ""}" alt="">
                       ${pi === 0
@@ -632,7 +632,7 @@ function renderSoloistsRegistry() {
       </div>
       <button class="btn btn-gold mt-3" id="saveSoloistsReg">Сохранить</button>`;
 
-    document.getElementById("addSoloistReg").onclick = () => { list.push({ id: uid("sol"), name: "", photo: "", bio: "" }); draw(); };
+    document.getElementById("addSoloistReg").onclick = () => { list.push({ id: uid("sol"), name: "", bio: "", photos: [] }); draw(); };
 
     document.querySelectorAll("#soloistsRegList [data-sol]").forEach((row) => {
       const i = Number(row.dataset.sol);
@@ -645,7 +645,7 @@ function renderSoloistsRegistry() {
         const f = file.files[0]; if (!f) return;
         try {
           const r = await uploadFile(f);
-          list[i].photos.push(r.url);
+          (list[i].photos = list[i].photos || []).push(r.url);
           draw();
           toast("Фото загружено");
         } catch (e) { toast(e.message, "error"); }
@@ -661,7 +661,7 @@ function renderSoloistsRegistry() {
 
     document.getElementById("saveSoloistsReg").onclick = async () => {
       const clean = list
-        .map((s) => ({ id: s.id, name: s.name.trim(), photos: s.photos, photo: s.photos[0] || "", bio: (s.bio || "").trim() }))
+        .map((s) => ({ id: s.id, name: s.name.trim(), photos: s.photos || [], photo: (s.photos || [])[0] || "", bio: (s.bio || "").trim() }))
         .filter((s) => s.name);
       try {
         await api("/api/soloists", { method: "PUT", body: JSON.stringify(clean) });
