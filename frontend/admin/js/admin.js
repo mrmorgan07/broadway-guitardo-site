@@ -265,7 +265,7 @@ function openProjectEdit(id) {
   editingProjectId = id;
   const p = id ? db.projects.find((x) => x.id === id) : {
     id: "", title: "", date: "", tag: "", description: "", poster: "", gallery: [], soloists: [], ticketLink: "",
-    duration: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, active: true, stage: "afisha"
+    duration: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, active: true, ticketsActive: true, stage: "afisha"
   };
   showView("projectEdit");
 
@@ -285,6 +285,10 @@ function openProjectEdit(id) {
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" name="active" id="projActive" ${p.active !== false ? "checked" : ""}>
               <label class="form-check-label" for="projActive">Активен <span class="text-secondary">(выключи, чтобы скрыть спектакль и его показы с сайта)</span></label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" name="ticketsActive" id="projTickets" ${p.ticketsActive !== false ? "checked" : ""}>
+              <label class="form-check-label" for="projTickets">Билеты активны <span class="text-secondary">(выключи, пока нет ссылки qtickets — кнопка «Билеты» станет неактивной)</span></label>
             </div>
           </div>
           <div class="col-12">
@@ -446,6 +450,7 @@ async function saveProject(gallery) {
   const body = {
     title: f.title.value.trim(),
     active: f.active.checked,
+    ticketsActive: f.ticketsActive.checked,
     stage: f.stage.value,
     tag: f.tag.value.trim(),
     duration: f.duration.value.trim(),
@@ -688,7 +693,8 @@ function renderAfisha() {
     priceTo: s.priceTo ?? "",
     freeAdmission: !!s.freeAdmission,
     soldOut: !!s.soldOut,
-    castId: s.castId || ""
+    castId: s.castId || "",
+    poster: s.poster || ""
   }));
 
   const spectacleOptions = (sel) => `<option value="">— спектакль —</option>` +
@@ -719,8 +725,17 @@ function renderAfisha() {
             <div class="col-md-6"><label class="form-label">Ссылка на билеты</label><input class="form-control show-ticket" value="${esc(s.ticketLink)}"></div>
             <div class="col-md-3"><label class="form-label">Цена от</label><input class="form-control show-pfrom" type="number" min="0" value="${esc(s.priceFrom)}"></div>
             <div class="col-md-3"><label class="form-label">Цена до</label><input class="form-control show-pto" type="number" min="0" value="${esc(s.priceTo)}"></div>
+            <div class="col-12 d-flex align-items-center gap-2 flex-wrap">
+              <label class="form-label mb-0">Постер показа</label>
+              ${s.poster
+                ? `<img src="${esc(mediaSrc(s.poster))}" style="width:52px;height:52px;object-fit:cover;border-radius:6px" alt="">`
+                : `<span class="text-muted small">— из спектакля —</span>`}
+              <input class="form-control form-control-sm show-poster" style="max-width:320px" value="${esc(s.poster)}" placeholder="Пусто → берётся постер спектакля">
+              <label class="btn btn-outline-secondary btn-sm mb-0">📷 Загрузить<input type="file" accept="image/*" class="d-none show-poster-file"></label>
+              ${s.poster ? `<button type="button" class="btn btn-outline-warning btn-sm show-poster-clear">↺ Сброс</button>` : ""}
+            </div>
             <div class="col-12 d-flex align-items-center gap-4 flex-wrap">
-              <div class="form-check form-switch"><input class="form-check-input show-free" type="checkbox" ${s.freeAdmission ? "checked" : ""}><label class="form-check-label">Вход свободный</label></div>
+              <div class="form-check form-switch"><input class="form-check-input show-free" type="checkbox" ${s.freeAdmission ? "checked" : ""}><label class="form-check-label">Бесплатный проход</label></div>
               <div class="form-check form-switch"><input class="form-check-input show-sold" type="checkbox" ${s.soldOut ? "checked" : ""}><label class="form-check-label">Билетов нет</label></div>
               <button type="button" class="btn btn-outline-danger btn-sm rm-show ms-auto">Удалить показ</button>
             </div>
@@ -729,7 +744,7 @@ function renderAfisha() {
       <button class="btn btn-gold mt-2" id="saveShows">Сохранить афишу</button>`;
 
     document.getElementById("addShow").onclick = () => {
-      shows.push({ id: uid("show"), spectacleId: "", datetime: "", date: "", ticketLink: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, castId: "" });
+      shows.push({ id: uid("show"), spectacleId: "", datetime: "", date: "", ticketLink: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, castId: "", poster: "" });
       draw();
     };
 
@@ -743,6 +758,15 @@ function renderAfisha() {
       card.querySelector(".show-pto").oninput = (e) => { shows[i].priceTo = e.target.value; };
       card.querySelector(".show-free").onchange = (e) => { shows[i].freeAdmission = e.target.checked; };
       card.querySelector(".show-sold").onchange = (e) => { shows[i].soldOut = e.target.checked; };
+      card.querySelector(".show-poster").oninput = (e) => { shows[i].poster = e.target.value; };
+      const pf = card.querySelector(".show-poster-file");
+      card.querySelector(".show-poster-file").onchange = async () => {
+        const f = pf.files[0]; if (!f) return;
+        try { const r = await uploadFile(f); shows[i].poster = r.url; draw(); toast("Постер показа загружен"); }
+        catch (err) { toast(err.message, "error"); }
+      };
+      const pc = card.querySelector(".show-poster-clear");
+      if (pc) pc.onclick = () => { shows[i].poster = ""; draw(); };
       card.querySelector(".rm-show").onclick = () => { shows.splice(i, 1); draw(); };
     });
 
@@ -752,7 +776,8 @@ function renderAfisha() {
         datetime: s.datetime || "",
         date: s.datetime ? formatRuDateTime(s.datetime) : (s.date || "").trim(),
         ticketLink: (s.ticketLink || "").trim(), priceFrom: s.priceFrom, priceTo: s.priceTo,
-        freeAdmission: !!s.freeAdmission, soldOut: !!s.soldOut, castId: s.castId || null
+        freeAdmission: !!s.freeAdmission, soldOut: !!s.soldOut, castId: s.castId || null,
+        poster: (s.poster || "").trim()
       }));
       try {
         await api("/api/shows", { method: "PUT", body: JSON.stringify(clean) });
@@ -1366,7 +1391,7 @@ function renderTexts() {
     { key: "aboutEyebrow", label: "«О коллективе» — надзаголовок", def: "О коллективе" },
     { key: "aboutTitle", label: "«О коллективе» — заголовок", def: "Магия рождается из полумрака" },
     { key: "quote", label: "Цитата (ступенчатый блок, несколько строк)", area: true, def: "Разные профессии.\nОдна любовь —\nк музыке и к сцене." },
-    { key: "leadersEyebrow", label: "«Лица коллектива» — надзаголовок", def: "Лица коллектива" },
+    { key: "leadersEyebrow", label: "«Коллектив» — надзаголовок", def: "КОЛЛЕКТИВ" },
     { key: "afishaTitle", label: "Афиша — заголовок", def: "Афиша" },
     { key: "repertoireTitle", label: "Репертуар — заголовок", def: "Репертуар" },
     { key: "featureEyebrow", label: "Текущий спектакль — надзаголовок", def: "Текущий проект" },
