@@ -105,8 +105,9 @@ server {
   gzip on;
   gzip_types text/css application/javascript image/svg+xml application/json;
 
-  # API → Express
-  location /api/ {
+  # API → Express. ^~ обязателен: иначе запросы вида /api/media/image/xxx.jpg
+  # перехватываются regex-локацией статики ниже (DELETE фото → 405/HTML → ошибка).
+  location ^~ /api/ {
     proxy_pass http://127.0.0.1:3000;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

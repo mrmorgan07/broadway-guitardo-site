@@ -34,19 +34,17 @@ function formatPrice(from, to) {
 }
 
 function projectDetailMeta(p = {}) {
-  const price = formatPrice(p.priceFrom, p.priceTo);
-  const priceRow = p.freeAdmission
-    ? `<dt>Стоимость</dt><dd>Вход свободный</dd>`
+  // Цена — только нижняя граница («от X ₽»), верхнюю не показываем; длительность убрана
+  const price = formatPrice(p.priceFrom, "");
+  return p.freeAdmission
+    ? `<dt>Стоимость</dt><dd>Бесплатный проход</dd>`
     : (price ? `<dt>Стоимость</dt><dd>${esc(price)}</dd>` : "");
-  return `
-    ${p.duration ? `<dt>Длительность</dt><dd>${esc(p.duration)}</dd>` : ""}
-    ${priceRow}`;
 }
 
 // Статус-плашки спектакля (вход свободный / билетов нет) — правый верх постера
 function projectBadges(p = {}) {
   const items = [];
-  if (p.freeAdmission) items.push(`<span class="poster__badge poster__badge--free">Вход свободный</span>`);
+  if (p.freeAdmission) items.push(`<span class="poster__badge poster__badge--free">Бесплатный проход</span>`);
   if (p.soldOut) items.push(`<span class="poster__badge poster__badge--sold">Билетов нет</span>`);
   return items.length ? `<div class="poster__badges">${items.join("")}</div>` : "";
 }
@@ -77,10 +75,15 @@ function soloistCard(s, extraClass = "") {
   const inner = photo
     ? `<img src="${esc(imgUrl(photo))}" alt="${esc(name)}" loading="lazy">`
     : `<span class="soloist__mono">${esc(monogram(name))}</span>`;
+  // Фамилия (последнее слово) — 1-я строка, имя (остальное) — 2-я
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  const nameHtml = parts.length > 1
+    ? `<span class="soloist__last">${esc(parts[parts.length - 1])}</span><span class="soloist__first">${esc(parts.slice(0, -1).join(" "))}</span>`
+    : `<span class="soloist__last">${esc(name)}</span>`;
   return `
     <div class="soloist${extraClass ? " " + extraClass : ""}">
       <div class="soloist__photo">${inner}</div>
-      <p class="soloist__name">${esc(name)}</p>
+      <p class="soloist__name">${nameHtml}</p>
       ${role ? `<p class="soloist__role">${esc(role)}</p>` : ""}
     </div>`;
 }
@@ -105,7 +108,7 @@ const TEXT_DEFAULTS = {
   aboutEyebrow: "О коллективе",
   aboutTitle: "Магия рождается из полумрака",
   quote: "Разные профессии.\nОдна любовь —\nк музыке и к сцене.",
-  leadersEyebrow: "Мы — Бродвей GUITARDO",
+  leadersEyebrow: "КОЛЛЕКТИВ",
   afishaTitle: "Афиша",
   repertoireTitle: "Репертуар",
   featureEyebrow: "Премьера сезона",
@@ -501,11 +504,12 @@ function showTime(s) {
 
 // Карточка афиши. attr — data-атрибут для клика (data-show или data-project).
 function posterCard(p, meta, attr) {
-  const tag = [p.tag, p.duration].filter(Boolean).join(" · ");
+  const tag = p.tag || "";
+  const ticketsActive = p.ticketsActive !== false; // рубильник «Билеты» на уровне спектакля
   return `
     <article class="poster" ${attr}>
       <div class="poster__media">
-        <img src="${esc(imgUrl(p.poster))}" alt="${esc(p.title)}" loading="lazy">
+        <img src="${esc(imgUrl(meta.poster || p.poster))}" alt="${esc(p.title)}" loading="lazy">
         ${meta.date ? `<span class="poster__date">${esc(meta.date)}</span>` : ""}
         ${projectBadges(meta)}
       </div>
@@ -515,9 +519,11 @@ function posterCard(p, meta, attr) {
         <button class="btn btn-secondary" ${attr}>О спектакле</button>
         ${meta.soldOut
           ? `<span class="btn btn-dark is-sold" aria-disabled="true">Билетов нет</span>`
-          : meta.ticketLink
-            ? `<a class="btn btn-dark" href="${esc(meta.ticketLink)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
-            : `<button class="btn btn-dark" ${attr}>Билеты</button>`}
+          : !ticketsActive
+            ? `<span class="btn btn-dark is-sold" aria-disabled="true">Билеты</span>`
+            : meta.ticketLink
+              ? `<a class="btn btn-dark" href="${esc(meta.ticketLink)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
+              : `<button class="btn btn-dark" ${attr}>Билеты</button>`}
       </div>
     </article>`;
 }
@@ -558,7 +564,7 @@ function renderAfisha(shows, spectacles = []) {
 
 // Карточка постановки в «Репертуаре» (как в афише, но без дат/билетов)
 function repertoireCard(p) {
-  const tag = [p.tag, p.duration].filter(Boolean).join(" · ");
+  const tag = p.tag || "";
   const cast = mainCastId(p);
   const attr = `data-project="${esc(p.id)}"${cast ? ` data-cast="${esc(cast)}"` : ""}`;
   return `
@@ -982,15 +988,15 @@ function openShow(showId) {
 // Автоподгон размера имени солиста: если не влезает в ширину колонки — уменьшаем
 // шрифт (а не переносим/ломаем слово), до минимального; на минимуме разрешаем перенос.
 function fitSoloistName(el) {
-  const MAX = 1.3, MIN = 0.8, STEP = 0.04;
-  el.style.whiteSpace = "nowrap";
+  // Имя в 2 строки (Фамилия/Имя), строки не переносятся (nowrap в CSS).
+  // Уменьшаем шрифт, пока самая длинная строка не влезет по ширине.
+  const MAX = 1.3, MIN = 0.72, STEP = 0.04;
   let size = MAX, guard = 0;
   el.style.fontSize = size + "rem";
   while (el.scrollWidth > el.clientWidth + 1 && size > MIN && guard++ < 40) {
     size -= STEP;
     el.style.fontSize = size + "rem";
   }
-  if (el.scrollWidth > el.clientWidth + 1) el.style.whiteSpace = "normal"; // всё равно не влезло
 }
 function fitSoloistNames(root) {
   (root || document).querySelectorAll(".soloist__name").forEach(fitSoloistName);
@@ -1096,7 +1102,7 @@ function openProject(id, castId, show) {
   $("#projectBody").innerHTML = `
     <div class="pd">
       <div class="pd__banner">
-        <img src="${esc(imgUrl((p.gallery && p.gallery[0]) || p.poster))}" alt="${esc(p.title)}">
+        <img src="${esc(imgUrl((show && show.poster) || (p.gallery && p.gallery[0]) || p.poster))}" alt="${esc(p.title)}">
       </div>
 
       <div class="pd__info">
@@ -1111,7 +1117,9 @@ function openProject(id, castId, show) {
             <p>${esc(p.description)}</p>
             ${m.soldOut
               ? `<span class="btn btn-primary is-sold" aria-disabled="true">Билетов нет</span>`
-              : m.ticketLink ? `<a href="${esc(m.ticketLink)}" class="btn btn-primary" target="_blank" rel="noopener">Билеты</a>` : ""}
+              : p.ticketsActive === false
+                ? `<span class="btn btn-primary is-sold" aria-disabled="true">Билеты</span>`
+                : m.ticketLink ? `<a href="${esc(m.ticketLink)}" class="btn btn-primary" target="_blank" rel="noopener">Билеты</a>` : ""}
           </div>
         </div>
       </div>
@@ -1205,9 +1213,11 @@ function initMbar() {
 
   const ticketBtn = featured?.soldOut
     ? `<span class="mbar__btn mbar__btn--primary is-sold" aria-disabled="true">Билетов нет</span>`
-    : ticket
-      ? `<a class="mbar__btn mbar__btn--primary" href="${esc(ticket)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
-      : `<a class="mbar__btn mbar__btn--primary" href="#afisha">Билеты</a>`;
+    : featured?.ticketsActive === false
+      ? `<span class="mbar__btn mbar__btn--primary is-sold" aria-disabled="true">Билеты</span>`
+      : ticket
+        ? `<a class="mbar__btn mbar__btn--primary" href="${esc(ticket)}" target="_blank" rel="noopener" data-stop>Билеты</a>`
+        : `<a class="mbar__btn mbar__btn--primary" href="#afisha">Билеты</a>`;
   const choirBtn = choir
     ? `<a class="mbar__btn mbar__btn--ghost" href="${esc(choir)}" target="_blank" rel="noopener" data-stop>В хор</a>`
     : `<a class="mbar__btn mbar__btn--ghost" href="#invite">В хор</a>`;

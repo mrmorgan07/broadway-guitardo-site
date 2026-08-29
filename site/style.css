@@ -932,8 +932,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 }
 .feature__banner img {
   width: 100%;
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
+  height: auto;
+  aspect-ratio: auto;   /* натуральные пропорции фото → не режется по бокам (широкий триптих виден целиком) */
   display: block;
 }
 /* Растворяющий оверлей — боковые края + низ */
@@ -942,7 +942,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right, var(--bg) 0%, transparent 12%, transparent 88%, var(--bg) 100%),
+    linear-gradient(to right, var(--bg) 0%, transparent 5%, transparent 95%, var(--bg) 100%),
     linear-gradient(to bottom, rgba(10,8,9,0.15) 0%, transparent 18%),
     linear-gradient(to bottom, transparent 55%, rgba(10,8,9,0.7) 82%, var(--bg) 100%);
   pointer-events: none;
@@ -1082,7 +1082,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
     transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.55s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.soloist__photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; filter: grayscale(0.6); transition: filter 0.5s; }
+.soloist__photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; filter: grayscale(1); transition: filter 0.5s; }
 .soloist:hover .soloist__photo img { filter: none; }
 /* Парение круглого фото при наведении + винное кольцо */
 .soloist:hover .soloist__photo {
@@ -1099,7 +1099,9 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   font-size: 2.4rem;
   color: var(--red);
 }
-.soloist__name { font-family: var(--font-display); font-size: 1.3rem; text-transform: uppercase; color: var(--cream); overflow-wrap: break-word; }
+.soloist__name { font-family: var(--font-display); font-size: 1.3rem; text-transform: uppercase; color: var(--cream); line-height: 1.05; }
+.soloist__last, .soloist__first { display: block; white-space: nowrap; }
+.soloist__first { color: var(--cream); }
 .soloist__role {
   font-family: var(--font-label);
   font-size: 11px;
@@ -1428,6 +1430,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 .pd__desc p { color: var(--text); margin-bottom: 24px; }
 .pd__block { padding: 0 clamp(28px, 4vw, 44px) clamp(28px, 4vw, 44px); }
 .pd__h3 { font-family: var(--font-display); font-size: 1.8rem; text-transform: uppercase; color: var(--cream); margin-bottom: 22px; }
+/* Галерея внутри модалки спектакля — фото целиком, натуральные пропорции (без обрезки по бокам) */
+.pd__block .carousel__slide img { aspect-ratio: auto; height: auto; object-fit: contain; }
 /* Переключатель составов в модалке спектакля */
 .cast-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 22px; }
 .cast-tab {
