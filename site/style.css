@@ -366,8 +366,15 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 .hero__content {
   position: relative;
   z-index: 2;
-  padding: calc(var(--header-h) + 20px) var(--pad) 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;   /* со слоганом (без спейсера) — по центру, как раньше */
+  min-height: 100svh;        /* на всю высоту → растягивающийся спейсер прижимает низ ко дну */
+  padding: calc(var(--header-h) + clamp(24px, 7vh, 70px)) var(--pad) clamp(40px, 6vh, 66px);
   max-width: 900px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .hero__eyebrow {
@@ -400,11 +407,9 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   padding-left: 0.04em;
 }
 
-.hero__line {
-  width: 70px; height: 2px;
-  background: var(--red);
-  margin: 32px auto;
-}
+/* На месте пустого слогана — растягивающийся отступ: прижимает нижнюю группу
+   (отсчёт/«до премьеры»/кнопки) ко дну hero, бренд остаётся сверху */
+.hero__spacer { flex: 1 1 auto; min-height: 70px; }
 
 .hero__subtitle {
   font-family: var(--font-body);

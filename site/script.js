@@ -75,10 +75,10 @@ function soloistCard(s, extraClass = "") {
   const inner = photo
     ? `<img src="${esc(imgUrl(photo))}" alt="${esc(name)}" loading="lazy">`
     : `<span class="soloist__mono">${esc(monogram(name))}</span>`;
-  // Фамилия (последнее слово) — 1-я строка, имя (остальное) — 2-я
+  // Имя (всё, кроме последнего слова) — 1-я строка, фамилия (последнее слово) — 2-я
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
   const nameHtml = parts.length > 1
-    ? `<span class="soloist__last">${esc(parts[parts.length - 1])}</span><span class="soloist__first">${esc(parts.slice(0, -1).join(" "))}</span>`
+    ? `<span class="soloist__first">${esc(parts.slice(0, -1).join(" "))}</span><span class="soloist__last">${esc(parts[parts.length - 1])}</span>`
     : `<span class="soloist__last">${esc(name)}</span>`;
   return `
     <div class="soloist${extraClass ? " " + extraClass : ""}">
@@ -209,8 +209,7 @@ function renderHero(db) {
       <div class="hero__content">
         <h1 class="hero__title">${esc(first)}</h1>
         ${rest ? `<p class="hero__brandsub">${esc(rest)}</p>` : ""}
-        <div class="hero__line"></div>
-        <p class="hero__subtitle">${sub}</p>
+        ${sub ? `<p class="hero__subtitle">${sub}</p>` : `<div class="hero__spacer" aria-hidden="true"></div>`}
         ${countdown}
         <div class="hero__actions">
           <a href="#afisha" class="btn btn-primary">Смотреть</a>
