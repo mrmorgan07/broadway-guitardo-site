@@ -17,6 +17,8 @@ try { commit = execSync("git rev-parse --short HEAD", { cwd: ROOT }).toString().
 let dirty = "";
 try { if (execSync("git status --porcelain", { cwd: ROOT }).toString().trim()) dirty = "+dirty"; } catch {}
 const BUILD_VERSION = `${commit}${dirty} · ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`;
+// Версия для cache-busting ассетов (?v=): меняется каждый деплой → браузеры тянут свежие css/js
+const ASSET_VER = commit !== "unknown" ? commit + (dirty ? "-d" + Date.now().toString(36).slice(-4) : "") : String(Date.now());
 
 rmSync(DIST, { recursive: true, force: true });
 mkdirSync(DIST, { recursive: true });
@@ -41,6 +43,8 @@ const rootIndex = join(DIST, "index.html");
 if (existsSync(rootIndex)) {
   const html = readFileSync(rootIndex, "utf8")
     .replaceAll("/site/", "/")
+    // cache-busting: версию ассетов (?v=…) привязываем к сборке — каждый деплой инвалидирует кэш
+    .replace(/\.(css|js)\?v=[^"'\s]*/g, (_m, ext) => `.${ext}?v=${ASSET_VER}`)
     .replace("</head>", `  <meta name="build" content="${BUILD_VERSION}">\n</head>`)
     .replace("</body>", `  <script>console.log("%cБродвей GUITARDO · build ${BUILD_VERSION}","color:#c13a57;font-weight:700")</script>\n</body>`);
   writeFileSync(rootIndex, html);

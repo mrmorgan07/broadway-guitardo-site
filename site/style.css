@@ -1064,7 +1064,9 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 .soloists { padding-top: clamp(50px, 7vw, 90px); }
 .soloists__grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* minmax(0,1fr) — колонки строго равны независимо от длины имён (иначе длинное
+     неразрывное слово растягивает свою колонку и кружки получаются разного размера) */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(16px, 2vw, 26px);
 }
 .soloist { text-align: center; }
@@ -1099,7 +1101,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   font-size: 2.4rem;
   color: var(--red);
 }
-.soloist__name { font-family: var(--font-display); font-size: 1.3rem; text-transform: uppercase; color: var(--cream); }
+.soloist__name { font-family: var(--font-display); font-size: 1.3rem; text-transform: uppercase; color: var(--cream); overflow-wrap: break-word; }
 .soloist__role {
   font-family: var(--font-label);
   font-size: 11px;
@@ -1612,7 +1614,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   .pcar__track .poster { flex-basis: calc((100% - clamp(16px, 2vw, 26px)) / 2); }
   .feature__info { grid-template-columns: 1fr; }
   .feature__meta { max-width: 480px; }
-  .soloists__grid { grid-template-columns: 1fr 1fr; }
+  .soloists__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pd__info { grid-template-columns: 1fr; }
   .pd__others { grid-template-columns: 1fr 1fr; }
   .footer__grid { grid-template-columns: 1fr 1fr; }
@@ -1642,7 +1644,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
 
   .leaders__grid { grid-template-columns: 1fr; }
   .pcar__track .poster { flex-basis: 80%; }
-  .soloists__grid { grid-template-columns: 1fr 1fr; }
+  .soloists__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footer__grid { grid-template-columns: 1fr; gap: 28px; }
   .footer__bottom { flex-direction: column; align-items: flex-start; gap: 10px; }
   .leader img { aspect-ratio: 16 / 11; }
