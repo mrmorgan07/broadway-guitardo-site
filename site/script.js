@@ -978,6 +978,31 @@ function openShow(showId) {
 }
 
 // Состав спектакля для детали. castId — какой состав показать (из показа афиши).
+// Автоподгон размера имени солиста: если не влезает в ширину колонки — уменьшаем
+// шрифт (а не переносим/ломаем слово), до минимального; на минимуме разрешаем перенос.
+function fitSoloistName(el) {
+  const MAX = 1.3, MIN = 0.8, STEP = 0.04;
+  el.style.whiteSpace = "nowrap";
+  let size = MAX, guard = 0;
+  el.style.fontSize = size + "rem";
+  while (el.scrollWidth > el.clientWidth + 1 && size > MIN && guard++ < 40) {
+    size -= STEP;
+    el.style.fontSize = size + "rem";
+  }
+  if (el.scrollWidth > el.clientWidth + 1) el.style.whiteSpace = "normal"; // всё равно не влезло
+}
+function fitSoloistNames(root) {
+  (root || document).querySelectorAll(".soloist__name").forEach(fitSoloistName);
+}
+// Пересчёт при ресайзе, пока открыта модалка спектакля
+let _fitRaf;
+window.addEventListener("resize", () => {
+  const m = document.getElementById("projectModal");
+  if (!m || !m.classList.contains("open")) return;
+  cancelAnimationFrame(_fitRaf);
+  _fitRaf = requestAnimationFrame(() => fitSoloistNames(document.getElementById("projectBody")));
+});
+
 // Карточки солистов одного состава (для табов и первичной отрисовки)
 function castCardsHtml(p, cast) {
   const roleById = Object.fromEntries((p.roles || []).map((r) => [r.id, r.name]));
@@ -1085,7 +1110,7 @@ function openProject(id, castId, show) {
         castBlock.querySelectorAll(".cast-tab").forEach((t) => t.classList.remove("active"));
         tab.classList.add("active");
         const c = (p.casts || []).find((x) => x.id === tab.dataset.castTab);
-        if (c && grid) grid.innerHTML = castCardsHtml(p, c);
+        if (c && grid) { grid.innerHTML = castCardsHtml(p, c); requestAnimationFrame(() => fitSoloistNames(grid)); }
       });
     });
   }
@@ -1094,6 +1119,13 @@ function openProject(id, castId, show) {
   modal.classList.add("open");
   document.body.style.overflow = "hidden";
   modal.querySelector(".modal__panel").scrollTop = 0;
+
+  // Подгон размера имён под ширину (после раскладки и после загрузки шрифтов)
+  const body = $("#projectBody");
+  requestAnimationFrame(() => fitSoloistNames(body));
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => { if (modal.classList.contains("open")) fitSoloistNames(body); });
+  }
 }
 
 function closeProject() {
