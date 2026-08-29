@@ -212,7 +212,7 @@ function renderHero(db) {
         ${sub ? `<p class="hero__subtitle">${sub}</p>` : `<div class="hero__spacer" aria-hidden="true"></div>`}
         ${countdown}
         <div class="hero__actions">
-          <a href="#afisha" class="btn btn-primary">Смотреть</a>
+          <a href="#afisha" class="btn btn-primary">Афиша</a>
           ${hasTrailer ? `<button class="btn btn-secondary" data-open-trailer>Трейлер</button>` : ""}
         </div>
       </div>
