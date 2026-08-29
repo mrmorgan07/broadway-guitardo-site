@@ -1234,6 +1234,20 @@ function renderHeroSection() {
           <div class="progress" style="height:6px"><div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width:100%"></div></div>
           <div class="text-muted small mt-1">Загрузка фонового видео…</div>
         </div>
+
+        <label class="form-label mt-3">🎥 Второе фоновое видео (необязательно)</label>
+        <div class="input-group">
+          <input class="form-control" name="videoFile2" id="heroVideoFileInput2" value="${esc(h.videoFile2)}" placeholder="/uploads/videos/фон2.mp4">
+          <label class="btn btn-outline-warning">
+            Загрузить
+            <input type="file" accept="video/mp4,video/webm,.mp4,.webm,.mov,.mkv,.avi" id="heroVideoBg2Upload" class="d-none">
+          </label>
+        </div>
+        <div class="form-text">Если заданы оба ролика — на сайте они чередуются: сначала первый, потом второй, и по кругу.</div>
+        <div id="heroVideoBg2Progress" class="d-none mt-1">
+          <div class="progress" style="height:6px"><div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width:100%"></div></div>
+          <div class="text-muted small mt-1">Загрузка второго видео…</div>
+        </div>
       </div>
 
       <div class="col-12">
@@ -1305,6 +1319,18 @@ function renderHeroSection() {
       const r = await uploadVideoWithProgress(file, document.getElementById("heroVideoBgProgress"), "Загрузка видео…");
       document.getElementById("heroVideoFileInput").value = r.url;
       toast("Видео загружено");
+    } catch (err) { toast(err.message, "error"); }
+    e.target.value = "";
+  });
+
+  // Загрузка второго фонового видео
+  document.getElementById("heroVideoBg2Upload").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const r = await uploadVideoWithProgress(file, document.getElementById("heroVideoBg2Progress"), "Загрузка второго видео…");
+      document.getElementById("heroVideoFileInput2").value = r.url;
+      toast("Второе видео загружено");
     } catch (err) { toast(err.message, "error"); }
     e.target.value = "";
   });

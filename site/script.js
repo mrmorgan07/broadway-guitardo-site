@@ -173,10 +173,11 @@ function renderHero(db) {
   // Тумблер фон: mediaType "photo"|"video". Обратная совместимость: если не задан —
   // показываем видео, когда файл есть (прежнее поведение).
   const wantVideo = hero.mediaType ? hero.mediaType === "video" : !!hero.videoFile;
-  const bgVideo = (wantVideo && hero.videoFile) ? imgUrl(hero.videoFile) : null;
-  const media = bgVideo
-    ? `<video class="hero__bg hero__bg--video" autoplay muted loop playsinline poster="${esc(imgUrl(hero.background))}">
-         <source src="${esc(bgVideo)}" type="${videoType(bgVideo)}">
+  // Один или два фоновых ролика. Два → чередуем (loop убираем, переключаем по "ended").
+  const heroVids = wantVideo ? [hero.videoFile, hero.videoFile2].filter(Boolean).map(imgUrl) : [];
+  const media = heroVids.length
+    ? `<video class="hero__bg hero__bg--video" autoplay muted ${heroVids.length > 1 ? "" : "loop"} playsinline poster="${esc(imgUrl(hero.background))}"${heroVids.length > 1 ? ` data-hero-videos="${encodeURIComponent(JSON.stringify(heroVids))}"` : ""}>
+         <source src="${esc(heroVids[0])}" type="${videoType(heroVids[0])}">
        </video>`
     : `<div class="hero__bg" style="background-image:url('${esc(imgUrl(hero.background))}')"></div>`;
 
@@ -1022,6 +1023,22 @@ window.addEventListener("resize", () => {
   _titleRaf = requestAnimationFrame(fitBigTitles);
 });
 
+// Чередование фоновых hero-роликов: по окончании одного включаем следующий (по кругу).
+function initHeroVideoRotation() {
+  const v = document.querySelector(".hero__bg--video[data-hero-videos]");
+  if (!v) return;
+  let list;
+  try { list = JSON.parse(decodeURIComponent(v.dataset.heroVideos)); } catch { return; }
+  if (!Array.isArray(list) || list.length < 2) return;
+  let i = 0;
+  v.addEventListener("ended", () => {
+    i = (i + 1) % list.length;
+    v.src = list[i];
+    v.load();
+    v.play().catch(() => {});
+  });
+}
+
 // Карточки солистов одного состава (для табов и первичной отрисовки)
 function castCardsHtml(p, cast) {
   const roleById = Object.fromEntries((p.roles || []).map((r) => [r.id, r.name]));
@@ -1384,6 +1401,9 @@ async function boot() {
   // Подгон крупных заголовков секций («АФИША», «РЕПЕРТУАР») под ширину экрана
   requestAnimationFrame(fitBigTitles);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBigTitles);
+
+  // Чередование двух фоновых hero-роликов
+  initHeroVideoRotation();
 
   // Увертюра-занавес: держим минимум N мс (полную — раз за сессию), затем поднимаем.
   // Удержание НЕ зависит от reduced-motion (это задержка, а не «движение») —
