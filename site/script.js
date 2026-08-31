@@ -109,6 +109,7 @@ const TEXT_DEFAULTS = {
   aboutTitle: "Магия рождается из полумрака",
   quote: "Разные профессии.\nОдна любовь —\nк музыке и к сцене.",
   leadersEyebrow: "КОЛЛЕКТИВ",
+  choirTitle: "ХОР",
   afishaTitle: "Афиша",
   repertoireTitle: "Репертуар",
   featureEyebrow: "Премьера сезона",
@@ -490,6 +491,40 @@ function renderLeaders(db) {
           ${leaderCard(db.artisticDirector, "Художественный руководитель", "")}
           ${leaderCard(db.concertmaster, "Концертмейстер", "d1")}
         </div>
+      </div>
+    </section>`;
+}
+
+// Участник хора: мелкий кружок-аватар + имя (основной шрифт, красным) + профессия (серым)
+function choirMemberCard(m) {
+  const name = (m && m.name) || "";
+  const inner = m && m.photo
+    ? `<img src="${esc(imgUrl(m.photo))}" alt="${esc(name)}" loading="lazy">`
+    : `<span class="choir-member__mono">${esc(monogram(name))}</span>`;
+  return `
+    <div class="choir-member">
+      <div class="choir-member__photo">${inner}</div>
+      <p class="choir-member__name">${esc(name)}</p>
+      ${m && m.profession ? `<p class="choir-member__prof">${esc(m.profession)}</p>` : ""}
+    </div>`;
+}
+
+// Раздел «ХОР» — сворачиваемый (по умолчанию свёрнут), сетка участников 4-в-ряд
+function renderChoir(db) {
+  const members = (Array.isArray(db.chorus) ? db.chorus : []).filter((m) => m && m.name);
+  if (!members.length) return "";
+  return `
+    <section class="section" id="choir">
+      <div class="container">
+        <details class="choir">
+          <summary class="choir__summary">
+            <span class="choir__title">${esc(txt("choirTitle"))}</span>
+            <span class="choir__chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="choir__grid">
+            ${members.map(choirMemberCard).join("")}
+          </div>
+        </details>
       </div>
     </section>`;
 }
@@ -1396,6 +1431,7 @@ async function boot() {
     renderAbout(DB.about) +
     renderSlogan(quote) +
     renderLeaders(DB) +
+    renderChoir(DB) +
     renderAfisha(DB.shows, DB.projects) +
     renderFeature(DB) +
     renderRepertoire(DB) +

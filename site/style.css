@@ -1116,6 +1116,74 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   margin-top: 4px;
 }
 
+/* ==========================================================================
+   ХОР — сворачиваемый раздел с участниками
+   ========================================================================== */
+.choir__summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;        /* заголовок сверху, стрелка снизу по центру */
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 1.2vw, 16px);
+  padding: 8px 0;
+  user-select: none;
+}
+.choir__summary::-webkit-details-marker { display: none; }
+.choir__summary:focus-visible { outline: 2px solid var(--red); outline-offset: 6px; border-radius: 10px; }
+.choir__title {
+  font-family: var(--font-display);
+  font-size: clamp(5.2rem, 11vw, 10rem);   /* как «Афиша»/«Репертуар» */
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--red-deep);
+  line-height: 1;
+  text-align: center;
+}
+.choir__chevron {
+  width: clamp(16px, 2.2vw, 26px);
+  height: clamp(16px, 2.2vw, 26px);
+  border-right: 3px solid var(--red);
+  border-bottom: 3px solid var(--red);
+  transform: rotate(45deg);            /* «вниз» — свёрнуто */
+  transition: transform 0.35s var(--ease);
+}
+.choir[open] .choir__chevron { transform: rotate(-135deg); }  /* «вверх» — раскрыто */
+.choir__grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(18px, 2.6vw, 34px) clamp(10px, 1.6vw, 22px);
+  margin-top: clamp(26px, 4vw, 46px);
+}
+.choir-member { text-align: center; }
+.choir-member__photo {
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  max-width: 120px;
+  margin: 0 auto 12px;
+  background: var(--panel-2);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(237, 235, 221, 0.14);
+  transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+}
+.choir-member__photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; filter: grayscale(1); transition: filter 0.5s; }
+.choir-member:hover .choir-member__photo img { filter: none; }
+.choir-member:hover .choir-member__photo {
+  transform: translateY(-6px);
+  box-shadow:
+    0 18px 36px rgba(0, 0, 0, 0.5),
+    0 6px 22px rgba(var(--red-rgb), 0.18),
+    inset 0 0 0 2px rgba(var(--red-rgb), 0.5);
+}
+.choir-member__mono { display: grid; place-items: center; width: 100%; height: 100%; font-family: var(--font-display); font-size: 1.5rem; color: var(--red); }
+.choir-member__name { font-family: var(--font-body); font-weight: 600; font-size: 0.98rem; letter-spacing: 0.01em; color: var(--red); line-height: 1.2; }
+.choir-member__prof { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+@media (max-width: 1024px) { .choir__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .choir__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
 /* Галерея */
 .gallery { padding-top: clamp(50px, 7vw, 90px); }
 

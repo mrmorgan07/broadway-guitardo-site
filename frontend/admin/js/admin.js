@@ -148,6 +148,7 @@ function showView(name) {
     projects: "viewProjects",
     projectEdit: "viewProjectEdit",
     soloists: "viewSoloists",
+    chorus: "viewChorus",
     afisha: "viewAfisha",
     hero: "viewHero",
     texts: "viewTexts",
@@ -174,6 +175,7 @@ document.getElementById("sideNav").addEventListener("click", (e) => {
   if (btn.dataset.view === "dashboard") renderDashboard();
   if (btn.dataset.view === "projects") renderProjectsList();
   if (btn.dataset.view === "soloists") renderSoloistsRegistry();
+  if (btn.dataset.view === "chorus") renderChorusRegistry();
   if (btn.dataset.view === "afisha") renderAfisha();
   if (btn.dataset.view === "hero") renderHeroSection();
   if (btn.dataset.view === "texts") renderTexts();
@@ -1190,6 +1192,71 @@ async function renderGallery() {
     };
   }
 
+  draw();
+}
+
+/* --- Хор (участники) --- */
+function renderChorusRegistry() {
+  const list = (db.chorus || []).map((m) => ({
+    id: m.id || uid("chorus"), name: m.name || "", profession: m.profession || "", photo: m.photo || ""
+  }));
+
+  function draw() {
+    document.getElementById("viewChorus").innerHTML = `
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <h2 class="mb-0" style="font-family:var(--font-heading)">Хор</h2>
+        <button class="btn btn-outline-secondary btn-sm" id="addChorus">+ Участник</button>
+      </div>
+      <p class="text-muted small mb-3">Участники хора: фото, имя и профессия. Показываются в сворачиваемом разделе «Хор» на сайте (кружки, 4 в ряд).</p>
+      <div id="chorusList" class="row g-3">
+        ${list.length ? list.map((m, i) => `
+          <div class="col-md-6" data-cm="${i}">
+            <div class="card bg-dark border-secondary"><div class="card-body d-flex gap-3">
+              <div class="text-center">
+                ${m.photo
+                  ? `<img src="${esc(mediaSrc(m.photo))}" class="rounded-circle" style="width:72px;height:72px;object-fit:cover" alt="">`
+                  : `<div class="text-muted d-flex align-items-center justify-content-center border border-secondary rounded-circle" style="width:72px;height:72px;font-size:.62rem">нет фото</div>`}
+                <input type="file" class="cm-file d-none" accept="image/*">
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2 cm-upload">📷</button>
+              </div>
+              <div class="flex-grow-1">
+                <input class="form-control mb-2 cm-name" value="${esc(m.name)}" placeholder="Имя Фамилия">
+                <input class="form-control cm-prof" value="${esc(m.profession)}" placeholder="Профессия (напр. сопрано, преподаватель)">
+              </div>
+              <button type="button" class="btn btn-outline-danger btn-sm rm-cm align-self-start">✕</button>
+            </div></div>
+          </div>`).join("") : `<div class="col-12 text-muted">Пока нет участников.</div>`}
+      </div>
+      <button class="btn btn-gold mt-3" id="saveChorus">Сохранить</button>`;
+
+    document.getElementById("addChorus").onclick = () => { list.push({ id: uid("chorus"), name: "", profession: "", photo: "" }); draw(); };
+
+    document.querySelectorAll("#chorusList [data-cm]").forEach((row) => {
+      const i = Number(row.dataset.cm);
+      row.querySelector(".cm-name").oninput = (e) => { list[i].name = e.target.value; };
+      row.querySelector(".cm-prof").oninput = (e) => { list[i].profession = e.target.value; };
+      row.querySelector(".rm-cm").onclick = () => { list.splice(i, 1); draw(); };
+      const file = row.querySelector(".cm-file");
+      row.querySelector(".cm-upload").onclick = () => file.click();
+      file.onchange = async () => {
+        const f = file.files[0]; if (!f) return;
+        try { const r = await uploadFile(f); list[i].photo = r.url; draw(); toast("Фото загружено"); }
+        catch (e) { toast(e.message, "error"); }
+      };
+    });
+
+    document.getElementById("saveChorus").onclick = async () => {
+      const clean = list
+        .map((m) => ({ id: m.id, name: m.name.trim(), profession: (m.profession || "").trim(), photo: (m.photo || "").trim() }))
+        .filter((m) => m.name);
+      try {
+        await api("/api/chorus", { method: "PUT", body: JSON.stringify(clean) });
+        db = await api("/api/content");
+        toast("Хор сохранён");
+        renderChorusRegistry();
+      } catch (e) { toast(e.message, "error"); }
+    };
+  }
   draw();
 }
 

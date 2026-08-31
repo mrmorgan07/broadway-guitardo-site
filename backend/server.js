@@ -496,7 +496,7 @@ function registryRoutes(key) {
     res.json(db[key]);
   });
 }
-["soloists", "shows"].forEach(registryRoutes);
+["soloists", "shows", "chorus"].forEach(registryRoutes);
 
 /* --- Auth --- */
 
