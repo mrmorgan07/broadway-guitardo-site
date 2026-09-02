@@ -987,19 +987,35 @@ function openShow(showId) {
 // Состав спектакля для детали. castId — какой состав показать (из показа афиши).
 // Автоподгон размера имени солиста: если не влезает в ширину колонки — уменьшаем
 // шрифт (а не переносим/ломаем слово), до минимального; на минимуме разрешаем перенос.
-function fitSoloistName(el) {
-  // Имя в 2 строки (Фамилия/Имя), строки не переносятся (nowrap в CSS).
-  // Уменьшаем шрифт, пока самая длинная строка не влезет по ширине.
-  const MAX = 1.3, MIN = 0.72, STEP = 0.04;
-  let size = MAX, guard = 0;
-  el.style.fontSize = size + "rem";
-  while (el.scrollWidth > el.clientWidth + 1 && size > MIN && guard++ < 40) {
-    size -= STEP;
-    el.style.fontSize = size + "rem";
+function fitToWidth(el, max, min, step, unit) {
+  // Уменьшаем шрифт, пока текст не влезет по ширине (строки — nowrap в CSS).
+  let size = max, guard = 0;
+  el.style.fontSize = size + unit;
+  while (el.scrollWidth > el.clientWidth + 1 && size > min && guard++ < 40) {
+    size -= step;
+    el.style.fontSize = size + unit;
   }
 }
+// Имя в 2 строки (Фамилия/Имя); роль — в 1 строку. И то и другое ужимаем по ширине,
+// чтобы у всех карточек в ряду высота совпадала и сетка не «съезжала».
+function fitSoloistName(el) { fitToWidth(el, 1.3, 0.72, 0.04, "rem"); }
+// Выравниваем высоту подписей в сетке: имена и роли (1–2 строки) получают одинаковую
+// высоту по самой высокой в сетке — ряды остаются ровными, а текст не обрезается.
+function equalizeSoloists(grid) {
+  ["soloist__name", "soloist__role"].forEach((cls) => {
+    const els = [...grid.querySelectorAll("." + cls)];
+    if (!els.length) return;
+    els.forEach((el) => { el.style.minHeight = ""; });
+    const max = Math.max(...els.map((el) => el.offsetHeight));
+    els.forEach((el) => { el.style.minHeight = max + "px"; });
+  });
+}
 function fitSoloistNames(root) {
-  (root || document).querySelectorAll(".soloist__name").forEach(fitSoloistName);
+  const r = root || document;
+  r.querySelectorAll(".soloist__name").forEach(fitSoloistName);
+  const grids = new Set(r.querySelectorAll(".soloists__grid"));
+  if (r.classList && r.classList.contains("soloists__grid")) grids.add(r);
+  grids.forEach(equalizeSoloists);
 }
 // Пересчёт при ресайзе, пока открыта модалка спектакля
 let _fitRaf;
