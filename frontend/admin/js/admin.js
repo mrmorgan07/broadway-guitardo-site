@@ -949,27 +949,41 @@ function renderChoir() {
 function renderContacts() {
   const c = db.contacts || {};
   const s = c.social || {};
+  const on = c.socialOn || {};   // активация соцсетей (по умолчанию — показывать)
+  const socialRow = (key, label) => `
+    <div class="col-12">
+      <label class="form-label">${label}</label>
+      <div class="d-flex align-items-center gap-3">
+        <input class="form-control" name="${key}" value="${esc(s[key])}" placeholder="Ссылка (https://…)">
+        <div class="form-check form-switch mb-0" style="white-space:nowrap">
+          <input class="form-check-input" type="checkbox" name="${key}On" id="sw_${key}" ${on[key] !== false ? "checked" : ""}>
+          <label class="form-check-label" for="sw_${key}">Показывать</label>
+        </div>
+      </div>
+    </div>`;
   document.getElementById("viewContacts").innerHTML = `
-    <h2 class="mb-4" style="font-family:var(--font-heading)">Контакты</h2>
+    <h2 class="mb-4" style="font-family:var(--font-heading)">Контакты и связь</h2>
     <form id="contactsForm" class="card bg-dark border-secondary"><div class="card-body row g-3">
-      <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" name="email" type="email" value="${esc(c.email)}"></div>
+      <div class="col-md-6"><label class="form-label">Email (почта)</label><input class="form-control" name="email" type="email" value="${esc(c.email)}"></div>
       <div class="col-md-6"><label class="form-label">Телефон</label><input class="form-control" name="phone" value="${esc(c.phone)}"></div>
-      <div class="col-12"><label class="form-label">VK</label><input class="form-control" name="vk" value="${esc(s.vk)}"></div>
-      <div class="col-12"><label class="form-label">Telegram</label><input class="form-control" name="telegram" value="${esc(s.telegram)}"></div>
-      <div class="col-12"><label class="form-label">YouTube</label><input class="form-control" name="youtube" value="${esc(s.youtube)}"></div>
+      <div class="col-12"><hr class="border-secondary my-1"><div class="text-muted small">Соцсети — ссылка + тумблер «Показывать» (иконка в футере скрывается, если выключено или ссылка пустая)</div></div>
+      ${socialRow("vk", "VK")}
+      ${socialRow("telegram", "Telegram")}
+      ${socialRow("youtube", "YouTube")}
       <div class="col-12"><button type="submit" class="btn btn-gold">Сохранить</button></div>
     </div></form>`;
 
   document.getElementById("contactsForm").onsubmit = async (e) => {
     e.preventDefault();
-    const fd = new FormData(e.target);
+    const f = e.target;
     try {
       await api("/api/contacts", {
         method: "PUT",
         body: JSON.stringify({
-          email: fd.get("email"),
-          phone: fd.get("phone"),
-          social: { vk: fd.get("vk"), telegram: fd.get("telegram"), youtube: fd.get("youtube") }
+          email: f.email.value,
+          phone: f.phone.value,
+          social: { vk: f.vk.value, telegram: f.telegram.value, youtube: f.youtube.value },
+          socialOn: { vk: f.vkOn.checked, telegram: f.telegramOn.checked, youtube: f.youtubeOn.checked }
         })
       });
       db = await api("/api/content");

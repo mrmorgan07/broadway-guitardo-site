@@ -756,15 +756,16 @@ function renderInvite(db) {
 function renderFooter(db) {
   const c = db.contacts || {};
   const s = c.social || {};
+  const on = c.socialOn || {};   // активация соцсетей (по умолчанию — показывать, если ссылка задана)
   const brand = db.brand || {};
   const year = new Date().getFullYear();
   const name = effectiveBrandName(db);
   const { first: footerFirst, rest: footerRest } = brandParts(name);
 
   const social = [
-    s.vk && `<a href="${esc(s.vk)}" target="_blank" rel="noopener" aria-label="VK"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5h-3c-.5 0-.7.3-.9.7-.6 1.3-1.6 3.1-2.4 3.1-.4 0-.5-.3-.5-.9V5.6c0-.4-.2-.6-.6-.6h-3.3c-.3 0-.5.2-.5.4 0 .5.6.6.7 1.7v2.4c0 .6-.1.7-.3.7-.7 0-1.9-1.9-2.6-4-.1-.4-.3-.6-.7-.6H3.6c-.4 0-.6.2-.6.5 0 .5 1 4.4 4.2 7.6 2 2 4.5 3 6.7 3 .5 0 .6-.2.6-.6v-1.7c0-.4.1-.6.4-.6.5 0 1.3 1.2 2.1 2.3.6.8.8.6 1.3.6h2.5c.4 0 .7-.2.5-.7-.2-.6-1.5-2.4-2.4-3.3-.2-.2-.1-.4 0-.5.7-.9 2.4-3.1 2.6-4 .1-.4 0-.6-.3-.6z"/></svg></a>`,
-    s.telegram && `<a href="${esc(s.telegram)}" target="_blank" rel="noopener" aria-label="Telegram"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3l-3.2 15c-.2 1-.9 1.3-1.8.8l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L4.6 13.3l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.3c.9-.3 1.6.2 1.3 1.3z"/></svg></a>`,
-    s.youtube && `<a href="${esc(s.youtube)}" target="_blank" rel="noopener" aria-label="YouTube"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5c-.2-1-.8-1.7-1.8-2C19.4 5 12 5 12 5s-7.4 0-9.2.5c-1 .3-1.6 1-1.8 2C.5 9.3.5 12 .5 12s0 2.7.5 4.5c.2 1 .8 1.7 1.8 2C4.6 19 12 19 12 19s7.4 0 9.2-.5c1-.3 1.6-1 1.8-2 .5-1.8.5-4.5.5-4.5s0-2.7-.5-4.5zM9.8 15.3V8.7l6.2 3.3-6.2 3.3z"/></svg></a>`
+    s.vk && on.vk !== false && `<a href="${esc(s.vk)}" target="_blank" rel="noopener" aria-label="VK"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5h-3c-.5 0-.7.3-.9.7-.6 1.3-1.6 3.1-2.4 3.1-.4 0-.5-.3-.5-.9V5.6c0-.4-.2-.6-.6-.6h-3.3c-.3 0-.5.2-.5.4 0 .5.6.6.7 1.7v2.4c0 .6-.1.7-.3.7-.7 0-1.9-1.9-2.6-4-.1-.4-.3-.6-.7-.6H3.6c-.4 0-.6.2-.6.5 0 .5 1 4.4 4.2 7.6 2 2 4.5 3 6.7 3 .5 0 .6-.2.6-.6v-1.7c0-.4.1-.6.4-.6.5 0 1.3 1.2 2.1 2.3.6.8.8.6 1.3.6h2.5c.4 0 .7-.2.5-.7-.2-.6-1.5-2.4-2.4-3.3-.2-.2-.1-.4 0-.5.7-.9 2.4-3.1 2.6-4 .1-.4 0-.6-.3-.6z"/></svg></a>`,
+    s.telegram && on.telegram !== false && `<a href="${esc(s.telegram)}" target="_blank" rel="noopener" aria-label="Telegram"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3l-3.2 15c-.2 1-.9 1.3-1.8.8l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L4.6 13.3l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.3c.9-.3 1.6.2 1.3 1.3z"/></svg></a>`,
+    s.youtube && on.youtube !== false && `<a href="${esc(s.youtube)}" target="_blank" rel="noopener" aria-label="YouTube"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5c-.2-1-.8-1.7-1.8-2C19.4 5 12 5 12 5s-7.4 0-9.2.5c-1 .3-1.6 1-1.8 2C.5 9.3.5 12 .5 12s0 2.7.5 4.5c.2 1 .8 1.7 1.8 2C4.6 19 12 19 12 19s7.4 0 9.2-.5c1-.3 1.6-1 1.8-2 .5-1.8.5-4.5.5-4.5s0-2.7-.5-4.5zM9.8 15.3V8.7l6.2 3.3-6.2 3.3z"/></svg></a>`
   ].filter(Boolean).join("");
 
   return `
