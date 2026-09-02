@@ -1196,6 +1196,28 @@ async function renderGallery() {
 }
 
 /* --- Хор (участники) --- */
+// Простой парсер CSV: авто-разделитель («;» или «,»), кавычки, пустые строки пропускаются.
+function parseCSV(text) {
+  const lines = String(text).replace(/^﻿/, "").split(/\r\n|\n|\r/).filter((l) => l.trim() !== "");
+  if (!lines.length) return [];
+  const first = lines[0];
+  const delim = (first.split(";").length > first.split(",").length) ? ";" : ",";
+  return lines.map((line) => {
+    const cells = []; let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQ) {
+        if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+        else cur += ch;
+      } else if (ch === '"') { inQ = true; }
+      else if (ch === delim) { cells.push(cur); cur = ""; }
+      else cur += ch;
+    }
+    cells.push(cur);
+    return cells.map((c) => c.trim());
+  });
+}
+
 function renderChorusRegistry() {
   const list = (db.chorus || []).map((m) => ({
     id: m.id || uid("chorus"), name: m.name || "", profession: m.profession || "", photo: m.photo || ""
@@ -1205,9 +1227,13 @@ function renderChorusRegistry() {
     document.getElementById("viewChorus").innerHTML = `
       <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <h2 class="mb-0" style="font-family:var(--font-heading)">Хор</h2>
-        <button class="btn btn-outline-secondary btn-sm" id="addChorus">+ Участник</button>
+        <div class="d-flex gap-2">
+          <label class="btn btn-outline-secondary btn-sm mb-0">📄 Импорт CSV<input type="file" accept=".csv,text/csv" id="chorusCsv" class="d-none"></label>
+          <button class="btn btn-outline-secondary btn-sm" id="addChorus">+ Участник</button>
+        </div>
       </div>
-      <p class="text-muted small mb-3">Участники хора: фото, имя и профессия. Показываются в сворачиваемом разделе «Хор» на сайте (кружки, 4 в ряд).</p>
+      <p class="text-muted small mb-3">Участники хора: фото, имя и профессия. Кружки на сайте, 6 в ряд.<br>
+        <b>CSV:</b> столбцы <code>Имя Фамилия</code> ; <code>Профессия</code> (по желанию 3-й — URL фото). Разделитель «;» или «,», строка-заголовок пропускается. После импорта проверьте, догрузите фото 📷 и нажмите «Сохранить».</p>
       <div id="chorusList" class="row g-3">
         ${list.length ? list.map((m, i) => `
           <div class="col-md-6" data-cm="${i}">
@@ -1230,6 +1256,26 @@ function renderChorusRegistry() {
       <button class="btn btn-gold mt-3" id="saveChorus">Сохранить</button>`;
 
     document.getElementById("addChorus").onclick = () => { list.push({ id: uid("chorus"), name: "", profession: "", photo: "" }); draw(); };
+
+    document.getElementById("chorusCsv").onchange = async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      try {
+        const rows = parseCSV(await f.text());
+        let start = 0;
+        const h0 = ((rows[0] && rows[0][0]) || "").toLowerCase();
+        if (h0 === "имя" || h0.includes("фио") || h0.includes("name") || h0.includes("фамил")) start = 1;
+        let added = 0;
+        for (let r = start; r < rows.length; r++) {
+          const name = (rows[r][0] || "").trim();
+          if (!name) continue;
+          list.push({ id: uid("chorus"), name: name, profession: (rows[r][1] || "").trim(), photo: (rows[r][2] || "").trim() });
+          added++;
+        }
+        draw();
+        toast(added ? `Импортировано: ${added}. Не забудьте «Сохранить».` : "В файле не найдено строк с именами");
+      } catch (err) { toast("Ошибка чтения CSV: " + err.message, "error"); }
+      e.target.value = "";
+    };
 
     document.querySelectorAll("#chorusList [data-cm]").forEach((row) => {
       const i = Number(row.dataset.cm);

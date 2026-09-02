@@ -511,7 +511,9 @@ function choirMemberCard(m) {
 
 // Раздел «ХОР» — сворачиваемый (по умолчанию свёрнут), сетка участников 4-в-ряд
 function renderChoir(db) {
-  const members = (Array.isArray(db.chorus) ? db.chorus : []).filter((m) => m && m.name);
+  const members = (Array.isArray(db.chorus) ? db.chorus : []).filter((m) => m && m.name)
+    .slice()
+    .sort((a, b) => String(a.name).localeCompare(String(b.name), "ru", { sensitivity: "base" }));
   if (!members.length) return "";
   return `
     <section class="section" id="choir">
