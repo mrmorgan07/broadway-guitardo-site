@@ -265,7 +265,7 @@ function openProjectEdit(id) {
   editingProjectId = id;
   const p = id ? db.projects.find((x) => x.id === id) : {
     id: "", title: "", date: "", tag: "", description: "", poster: "", gallery: [], soloists: [], ticketLink: "",
-    duration: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, active: true, ticketsActive: true, stage: "afisha"
+    duration: "", priceFrom: "", priceTo: "", freeAdmission: false, soldOut: false, active: true, ticketsActive: true, stage: "afisha", ageRating: ""
   };
   showView("projectEdit");
 
@@ -304,6 +304,14 @@ function openProjectEdit(id) {
           <div class="col-md-6">
             <label class="form-label">Тег</label>
             <input class="form-control" name="tag" value="${esc(p.tag)}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Возрастная категория</label>
+            <select class="form-select" name="ageRating">
+              ${["", "6+", "12+", "16+", "18+"].map((v) =>
+                `<option value="${v}" ${p.ageRating === v ? "selected" : ""}>${v || "— не указана —"}</option>`).join("")}
+            </select>
+            <div class="form-text">Метка в углу постера (Афиша, Репертуар, карточка). «Не указана» — метки нет.</div>
           </div>
           <div class="col-md-6">
             <label class="form-label">Длительность</label>
@@ -453,6 +461,7 @@ async function saveProject(gallery) {
     ticketsActive: f.ticketsActive.checked,
     stage: f.stage.value,
     tag: f.tag.value.trim(),
+    ageRating: f.ageRating.value,
     duration: f.duration.value.trim(),
     description: f.description.value.trim(),
     poster: f.poster.value.trim() || document.getElementById("posterUrl").value,
