@@ -898,6 +898,41 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height
   -webkit-backdrop-filter: blur(4px);
 }
 
+/* Возрастная метка — билетный корешок (концепт «Корешок»): винная плашка с
+   перфорацией по левому краю и пунктиром отрыва. Правый-нижний угол, чтобы не
+   пересекаться с датой (лев-верх) и плашками (прав-верх). */
+.age-badge {
+  position: absolute;
+  bottom: 12px; right: 12px;
+  z-index: 2;
+  padding: 9px 12px 5px 16px;
+  border-radius: 5px;
+  background: var(--red-deep);
+  color: var(--cream);
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.9);
+  /* полукруглые вырезы перфорации по левому краю */
+  -webkit-mask: radial-gradient(circle 3px at 0 8px, transparent 96%, #000) 0 0 / 100% 12px;
+          mask: radial-gradient(circle 3px at 0 8px, transparent 96%, #000) 0 0 / 100% 12px;
+  user-select: none;
+  pointer-events: none;
+}
+.age-badge::before {
+  content: "";
+  position: absolute;
+  left: 5px; top: 7px; bottom: 7px;
+  border-left: 1px dashed rgba(237, 235, 221, 0.45);
+}
+.pd__banner .age-badge { bottom: 14px; right: 14px; font-size: 0.9rem; }
+@media (max-width: 720px) {
+  .age-badge { bottom: 10px; right: 10px; font-size: 0.74rem; padding: 8px 10px 4px 14px; }
+}
+
 /* «Билетов нет» — нерабочая кнопка-заглушка в стиле сайта */
 .btn.is-sold,
 .mbar__btn.is-sold {

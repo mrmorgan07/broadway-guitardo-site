@@ -49,6 +49,11 @@ function projectBadges(p = {}) {
   return items.length ? `<div class="poster__badges">${items.join("")}</div>` : "";
 }
 
+// Возрастная метка (билетный корешок) в углу постера. Пусто, если категория не задана.
+function ageBadge(rating) {
+  return rating ? `<span class="age-badge" aria-label="Возрастное ограничение ${esc(rating)}">${esc(rating)}</span>` : "";
+}
+
 function videoType(url) {
   if (url.endsWith(".webm")) return "video/webm";
   if (url.endsWith(".ogv")) return "video/ogg";
@@ -511,6 +516,7 @@ function posterCard(p, meta, attr) {
         <img src="${esc(imgUrl(meta.poster || p.poster))}" alt="${esc(p.title)}" loading="lazy">
         ${meta.date ? `<span class="poster__date">${esc(meta.date)}</span>` : ""}
         ${projectBadges(meta)}
+        ${ageBadge(p.ageRating)}
       </div>
       <h3 class="poster__title">${esc(p.title)}</h3>
       ${tag ? `<p class="poster__tag">${esc(tag)}</p>` : ""}
@@ -570,6 +576,7 @@ function repertoireCard(p) {
     <article class="poster" ${attr}>
       <div class="poster__media">
         <img src="${esc(imgUrl(p.poster))}" alt="${esc(p.title)}" loading="lazy">
+        ${ageBadge(p.ageRating)}
       </div>
       <h3 class="poster__title">${esc(p.title)}</h3>
       ${tag ? `<p class="poster__tag">${esc(tag)}</p>` : ""}
@@ -1119,6 +1126,7 @@ function openProject(id, castId, show) {
     <div class="pd">
       <div class="pd__banner">
         <img src="${esc(imgUrl((show && show.poster) || (p.gallery && p.gallery[0]) || p.poster))}" alt="${esc(p.title)}">
+        ${ageBadge(p.ageRating)}
       </div>
 
       <div class="pd__info">
